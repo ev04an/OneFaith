@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "OneFaith",
+    "slug": "onefaith",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "onefaith",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#3A7AC4"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.onefaith.app"
+    },
+    "android": {
+      "package": "com.onefaith.app",
+      "softwareKeyboardLayoutMode": "pan",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#3A7AC4"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/adaptive-icon.png",
+          "color": "#5B9BE3"
+        }
+      ]
+    ]
+  }
+}
