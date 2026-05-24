@@ -1,7 +1,6 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SoftCurves } from '../components/SoftCurves';
@@ -11,6 +10,11 @@ import { getVersesForTopic } from '../data/verses';
 import type { Topic, TopicMeta } from '../data/topics';
 import { TOPICS } from '../data/topics';
 import type { RootStackParamList } from '../navigation/types';
+
+// Pastel card tints are theme-independent (always light), so text on them
+// must be too — theme.colors.text is white in dark mode and would disappear.
+const CARD_TITLE = '#0F1F4B';
+const CARD_BODY = '#3A4A63';
 
 // Curated 15 most-relevant verse categories per user spec, in display order.
 const FEATURED_TOPIC_IDS: Topic[] = [
@@ -49,22 +53,24 @@ const EMOJI: Partial<Record<Topic, string>> = {
   purpose: '🧭',
 };
 
-const TINT: Partial<Record<Topic, { bg: string; iconBg: string }>> = {
-  strength: { bg: '#FFE6D9', iconBg: '#FF8B4A' },
-  heartbreak: { bg: '#FFE2EC', iconBg: '#E08AB0' },
-  anxiety: { bg: '#E6EEFE', iconBg: '#5B9BE3' },
-  hope: { bg: '#FFEFC9', iconBg: '#E0B461' },
-  healing: { bg: '#E2F4ED', iconBg: '#2EA079' },
-  loneliness: { bg: '#E8E4F8', iconBg: '#8A7BD8' },
-  fear: { bg: '#E6EBF5', iconBg: '#5C70A0' },
-  depression: { bg: '#DDE3F0', iconBg: '#4A5A85' },
-  faith: { bg: '#DCEBFB', iconBg: '#3A6EBF' },
-  love: { bg: '#FFE2EC', iconBg: '#FF7AA1' },
-  forgiveness: { bg: '#E0F0FE', iconBg: '#5B9BE3' },
-  motivation: { bg: '#FFEAD6', iconBg: '#E0B461' },
-  thankfulness: { bg: '#FFF1D6', iconBg: '#D4A24A' },
-  peace: { bg: '#E6F7EE', iconBg: '#52CBA5' },
-  purpose: { bg: '#E0EBFB', iconBg: '#1B3578' },
+// Deeper pastel tints — readable for dark text, more visible than the
+// previous near-white tones.
+const TINT: Partial<Record<Topic, string>> = {
+  strength: '#FFD0B5',
+  heartbreak: '#FFCEDD',
+  anxiety: '#CFDEFB',
+  hope: '#FFE3A1',
+  healing: '#C5EBDB',
+  loneliness: '#D5CFEF',
+  fear: '#C8D4E8',
+  depression: '#BBC6E0',
+  faith: '#B8D4F4',
+  love: '#FFC8DC',
+  forgiveness: '#C5DFF7',
+  motivation: '#FFD9B3',
+  thankfulness: '#F9DEA8',
+  peace: '#C8EBD7',
+  purpose: '#BFD3F1',
 };
 
 export function VerseCategoriesScreen() {
@@ -96,7 +102,7 @@ export function VerseCategoriesScreen() {
         <View style={styles.grid}>
           {topics.map((t) => {
             const count = getVersesForTopic(t.id).length;
-            const tint = TINT[t.id] ?? { bg: '#E6EEFE', iconBg: '#3A6EBF' };
+            const bg = TINT[t.id] ?? '#CFE3FF';
             const emoji = EMOJI[t.id] ?? '✝️';
             return (
               <Pressable
@@ -105,45 +111,19 @@ export function VerseCategoriesScreen() {
                 style={[
                   styles.card,
                   {
-                    backgroundColor: tint.bg,
-                    borderColor: theme.colors.borderStrong,
+                    backgroundColor: bg,
+                    borderColor: 'rgba(15,31,75,0.12)',
                   },
                   theme.shadow.softLight,
                 ]}
               >
-                <View
-                  style={[
-                    styles.cardIcon,
-                    { backgroundColor: tint.iconBg },
-                  ]}
-                >
-                  <Ionicons name={t.icon as any} size={18} color="#FFFFFF" />
-                </View>
                 <Text style={styles.emoji}>{emoji}</Text>
-                <Text
-                  style={[
-                    theme.typography.bodyBold,
-                    {
-                      color: theme.colors.text,
-                      marginTop: 10,
-                      fontSize: 15,
-                    },
-                  ]}
-                >
-                  {t.label}
-                </Text>
-                <Text
-                  style={[
-                    theme.typography.caption,
-                    {
-                      color: theme.colors.textMuted,
-                      marginTop: 2,
-                      fontSize: 12,
-                    },
-                  ]}
-                >
-                  {count} verse{count === 1 ? '' : 's'}
-                </Text>
+                <View>
+                  <Text style={styles.cardTitle}>{t.label}</Text>
+                  <Text style={styles.cardBody}>
+                    {count} verse{count === 1 ? '' : 's'}
+                  </Text>
+                </View>
               </Pressable>
             );
           })}
@@ -161,21 +141,25 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '47.5%',
-    padding: 14,
+    padding: 16,
     borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
-    minHeight: 132,
+    minHeight: 138,
     justifyContent: 'space-between',
   },
-  cardIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   emoji: {
-    fontSize: 22,
-    marginTop: 8,
+    fontSize: 32,
+  },
+  cardTitle: {
+    color: CARD_TITLE,
+    fontWeight: '700',
+    fontSize: 16,
+    letterSpacing: -0.1,
+  },
+  cardBody: {
+    color: CARD_BODY,
+    fontSize: 12.5,
+    fontWeight: '500',
+    marginTop: 3,
   },
 });

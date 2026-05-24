@@ -5,12 +5,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import { GlassCard } from '../components/GlassCard';
 import { GradientButton } from '../components/GradientButton';
 import { StreakTimer } from '../components/StreakTimer';
 import { LevelBadge } from '../components/LevelBadge';
 import { Confetti } from '../components/Confetti';
+import { ShimmerOverlay } from '../components/ShimmerOverlay';
+import { AnimatedCounter } from '../components/AnimatedCounter';
 import { useTheme } from '../theme';
 import { useStreakStore } from '../state/store';
 import { msToParts, formatLongDuration } from '../utils/time';
@@ -130,12 +133,16 @@ export function RecoveryScreen() {
           </Pressable>
         </View>
 
-        <View style={{ alignItems: 'center', marginTop: 24 }}>
+        <Animated.View
+          entering={FadeIn.duration(700)}
+          style={{ alignItems: 'center', marginTop: 24 }}
+        >
           <StreakTimer ms={elapsed} running={running} />
-        </View>
+        </Animated.View>
 
         {/* Affirmation under timer */}
-        <Text
+        <Animated.Text
+          entering={FadeInUp.duration(600).delay(180).springify().damping(14)}
           style={[
             theme.typography.verse,
             {
@@ -149,7 +156,7 @@ export function RecoveryScreen() {
           ]}
         >
           “{affirmation}”
-        </Text>
+        </Animated.Text>
 
         {/* CTA */}
         <View style={{ marginTop: 24, alignItems: 'center' }}>
@@ -178,11 +185,15 @@ export function RecoveryScreen() {
         </View>
 
         {/* Stats row */}
-        <View style={[styles.statsRow, { marginTop: 28 }]}>
+        <Animated.View
+          entering={FadeInUp.duration(600).delay(260).springify().damping(14)}
+          style={[styles.statsRow, { marginTop: 28 }]}
+        >
           <StatCard
             icon="flame-outline"
             label="Current"
-            value={`${days}d`}
+            numericValue={days}
+            valueSuffix="d"
             tone="#FF8B4A"
           />
           <StatCard
@@ -194,14 +205,16 @@ export function RecoveryScreen() {
           <StatCard
             icon="refresh-outline"
             label="Resets"
-            value={String(totalResets)}
+            numericValue={totalResets}
             tone={theme.colors.primary}
           />
-        </View>
+        </Animated.View>
 
         {/* Level card */}
         {running && (
-          <GlassCard style={{ marginTop: 20 }}>
+          <Animated.View entering={FadeInUp.duration(700).delay(340).springify().damping(14)}>
+          <GlassCard glowSoft depth style={{ marginTop: 20, overflow: 'hidden' }}>
+            <ShimmerOverlay delay={900} duration={1800} stripeWidth={140} />
             <Text style={[theme.typography.overline, { color: theme.colors.textFaint }]}>
               CURRENT LEVEL
             </Text>
@@ -261,10 +274,14 @@ export function RecoveryScreen() {
               </View>
             ) : null}
           </GlassCard>
+          </Animated.View>
         )}
 
         {/* Badges preview */}
-        <View style={{ marginTop: 22 }}>
+        <Animated.View
+          entering={FadeInUp.duration(700).delay(420).springify().damping(14)}
+          style={{ marginTop: 22 }}
+        >
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text style={[theme.typography.h2, { color: theme.colors.text, flex: 1 }]}>
               Milestones
@@ -280,11 +297,16 @@ export function RecoveryScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ gap: 10, marginTop: 12, paddingRight: 18 }}
           >
-            {BADGES.map((b) => (
-              <LevelBadge key={b.id} badge={b} earned={earned.some((e) => e.id === b.id)} />
+            {BADGES.map((b, i) => (
+              <Animated.View
+                key={b.id}
+                entering={FadeInUp.duration(500).delay(500 + i * 80).springify().damping(14)}
+              >
+                <LevelBadge badge={b} earned={earned.some((e) => e.id === b.id)} />
+              </Animated.View>
             ))}
           </ScrollView>
-        </View>
+        </Animated.View>
       </ScrollView>
     </View>
   );
@@ -294,18 +316,28 @@ function StatCard({
   icon,
   label,
   value,
+  numericValue,
+  valueSuffix,
   tone,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  value: string;
+  value?: string;
+  /** When provided, the value will smoothly count up from 0 to this number. */
+  numericValue?: number;
+  valueSuffix?: string;
   tone: string;
 }) {
   const theme = useTheme();
+  const valueStyle = [theme.typography.h2, { color: theme.colors.text, marginTop: 8 }];
   return (
-    <GlassCard padded style={{ flex: 1 }}>
+    <GlassCard padded glowSoft style={{ flex: 1, overflow: 'hidden' }}>
       <Ionicons name={icon} size={18} color={tone} />
-      <Text style={[theme.typography.h2, { color: theme.colors.text, marginTop: 8 }]}>{value}</Text>
+      {typeof numericValue === 'number' ? (
+        <AnimatedCounter value={numericValue} suffix={valueSuffix ?? ''} style={valueStyle as any} />
+      ) : (
+        <Text style={valueStyle}>{value}</Text>
+      )}
       <Text style={[theme.typography.caption, { color: theme.colors.textFaint, marginTop: 2 }]}>
         {label.toUpperCase()}
       </Text>

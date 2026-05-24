@@ -53,6 +53,7 @@ import {
   useAIMemoryStore,
 } from './src/state/store';
 import { rescheduleAll } from './src/utils/notifications';
+import { ToastProvider } from './src/components/Toast';
 import { useAuthStore } from './src/state/auth';
 
 function useHydrated(): boolean {
@@ -165,7 +166,9 @@ function Inner() {
       <StatusBar style={theme.isDark ? 'light' : 'dark'} />
       <AuthInitializer />
       <NotificationScheduler />
-      <RootNavigator />
+      <ToastProvider>
+        <RootNavigator />
+      </ToastProvider>
     </Animated.View>
   );
 }

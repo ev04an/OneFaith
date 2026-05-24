@@ -29,6 +29,9 @@ expo-env.d.ts
 secrets/
 credentials/
 
+# ─── Play Store assets (contains demo review credentials) ─────────────────
+play-store-assets/
+
 # ─── Logs ─────────────────────────────────────────────────────────────────
 *.log
 logs/

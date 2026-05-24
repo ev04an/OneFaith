@@ -102,7 +102,9 @@ export function StreakTimer({ ms, size = 280, running }: Props) {
           strokeDasharray={`${c} ${c}`}
           strokeDashoffset={c * (1 - progress)}
           strokeLinecap="round"
-          transform={`rotate(-90, ${size / 2}, ${size / 2})`}
+          rotation={-90}
+          originX={size / 2}
+          originY={size / 2}
         />
       </Svg>
       <View style={styles.center}>

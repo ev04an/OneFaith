@@ -391,53 +391,66 @@ function BookGrid({
   books: typeof BIBLE_BOOKS;
   onPick: (id: string) => void;
 }) {
-  const theme = useTheme();
   const { width: screenWidth } = useWindowDimensions();
-  // Compute exact 3-column cell width. Math.floor avoids subpixel rounding
-  // that can push the 3rd cell to a new row on iOS.
   const cellWidth = Math.floor((screenWidth - 20 * 2 - 10 * 2) / 3);
   return (
     <View style={styles.grid}>
       {books.map((b) => (
-        <Pressable
-          key={b.id}
-          onPress={() => onPick(b.id)}
-          style={[
-            styles.bookCell,
-            {
-              width: cellWidth,
-              backgroundColor: theme.colors.bgGlass,
-              borderColor: theme.colors.borderStrong,
-            },
-          ]}
-        >
-          <Text
-            numberOfLines={2}
-            style={{
-              color: theme.colors.text,
-              fontSize: 13,
-              fontWeight: '700',
-              letterSpacing: 0.2,
-              textAlign: 'center',
-            }}
-          >
-            {b.name}
-          </Text>
-          <Text
-            style={{
-              color: theme.colors.text,
-              opacity: 0.65,
-              fontSize: 11,
-              marginTop: 3,
-            }}
-          >
-            {b.chapters} ch
-          </Text>
-        </Pressable>
+        <BookCell key={b.id} book={b} cellWidth={cellWidth} onPick={onPick} />
       ))}
     </View>
   );
 }
+
+// Memoized so each of the 66 book cells only re-renders when its own props
+// change — prevents scroll-time re-renders of unrelated cells.
+const BookCell = React.memo(function BookCell({
+  book,
+  cellWidth,
+  onPick,
+}: {
+  book: typeof BIBLE_BOOKS[number];
+  cellWidth: number;
+  onPick: (id: string) => void;
+}) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      onPress={() => onPick(book.id)}
+      style={[
+        styles.bookCell,
+        {
+          width: cellWidth,
+          backgroundColor: theme.colors.bgGlass,
+          borderColor: theme.colors.borderStrong,
+        },
+      ]}
+    >
+      <Text
+        numberOfLines={2}
+        style={{
+          color: theme.colors.text,
+          fontSize: 13,
+          fontWeight: '700',
+          letterSpacing: 0.2,
+          textAlign: 'center',
+        }}
+      >
+        {book.name}
+      </Text>
+      <Text
+        style={{
+          color: theme.colors.text,
+          opacity: 0.65,
+          fontSize: 11,
+          marginTop: 3,
+        }}
+      >
+        {book.chapters} ch
+      </Text>
+    </Pressable>
+  );
+});
 
 const styles = StyleSheet.create({
   tabBar: { flexDirection: 'row', gap: 8 },

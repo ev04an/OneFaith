@@ -1,14 +1,22 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Animated, {
+  FadeInUp,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { GlassCard } from '../components/GlassCard';
 import { VerseCard } from '../components/VerseCard';
 import { GradientButton } from '../components/GradientButton';
+import { ShimmerOverlay } from '../components/ShimmerOverlay';
 import { useTheme } from '../theme';
 import { getVerseOfTheDay } from '../data/verses';
 import { getAffirmationOfTheHour } from '../data/affirmations';
@@ -82,6 +90,22 @@ export function DailyScreen() {
     day: 'numeric',
   });
 
+  // Scroll parallax on the verse hero — slides slower than the page, gently
+  // scales and fades as the user scrolls down. Single shared value, UI thread.
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      scrollY.value = e.contentOffset.y;
+    },
+  });
+  // Translate-only parallax. See HomeScreen note — scaling a shadowed card on
+  // Android re-rasterises the shadow per frame.
+  const verseParallax = useAnimatedStyle(() => {
+    const translateY = interpolate(scrollY.value, [-100, 0, 220], [-24, 0, -42]);
+    const opacity = interpolate(scrollY.value, [0, 180, 300], [1, 0.85, 0.6]);
+    return { transform: [{ translateY }], opacity };
+  });
+
   return (
     <View style={{ flex: 1 }}>
       <AnimatedBackground variant="primary" intensity={0.55} />
@@ -91,7 +115,7 @@ export function DailyScreen() {
         large
         subtitle={dateStr.toUpperCase()}
       />
-      <ScrollView
+      <Animated.ScrollView
         contentContainerStyle={{
           paddingHorizontal: theme.spacing.screen,
           paddingTop: 12,
@@ -99,24 +123,35 @@ export function DailyScreen() {
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
       >
-        {/* Verse of the day */}
-        <Text
-          style={[
-            theme.typography.overline,
-            { color: theme.colors.text, opacity: 0.78, marginBottom: 10 },
-          ]}
-        >
-          VERSE OF THE DAY
-        </Text>
-        <VerseCard
-          verse={verse}
-          gradient="primary"
-          onPress={() => nav.navigate('VerseDetail', { verseId: verse.id })}
-        />
+        {/* Verse of the day — parallax + shimmer */}
+        <Animated.View style={verseParallax}>
+          <Animated.Text
+            entering={FadeInUp.duration(500).springify().damping(14)}
+            style={[
+              theme.typography.overline,
+              { color: theme.colors.text, opacity: 0.78, marginBottom: 10 },
+            ]}
+          >
+            VERSE OF THE DAY
+          </Animated.Text>
+          <View style={{ overflow: 'hidden', borderRadius: 22 }}>
+            <VerseCard
+              verse={verse}
+              gradient="primary"
+              onPress={() => nav.navigate('VerseDetail', { verseId: verse.id })}
+            />
+            <ShimmerOverlay delay={650} duration={1900} stripeWidth={150} color="rgba(255,255,255,0.22)" />
+          </View>
+        </Animated.View>
 
         {/* Devotional reflection */}
-        <View style={{ marginTop: 22 }}>
+        <Animated.View
+          entering={FadeInUp.duration(550).delay(140).springify().damping(14)}
+          style={{ marginTop: 22 }}
+        >
           <Text
             style={[
               theme.typography.overline,
@@ -125,7 +160,7 @@ export function DailyScreen() {
           >
             REFLECTION
           </Text>
-          <GlassCard padded={18}>
+          <GlassCard padded={18} glowSoft>
             <Text
               style={[
                 theme.typography.body,
@@ -135,10 +170,13 @@ export function DailyScreen() {
               {reflection}
             </Text>
           </GlassCard>
-        </View>
+        </Animated.View>
 
         {/* Challenge */}
-        <View style={{ marginTop: 22 }}>
+        <Animated.View
+          entering={FadeInUp.duration(550).delay(220).springify().damping(14)}
+          style={{ marginTop: 22 }}
+        >
           <Text
             style={[
               theme.typography.overline,
@@ -147,7 +185,8 @@ export function DailyScreen() {
           >
             DAILY CHALLENGE
           </Text>
-          <GlassCard padded={18}>
+          <GlassCard padded={18} glowSoft style={{ overflow: 'hidden' }}>
+            <ShimmerOverlay delay={1300} duration={1700} stripeWidth={120} color="rgba(255,200,120,0.32)" />
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Ionicons name="flame" size={24} color="#E0B461" />
               <Text
@@ -160,10 +199,13 @@ export function DailyScreen() {
               </Text>
             </View>
           </GlassCard>
-        </View>
+        </Animated.View>
 
         {/* Affirmation */}
-        <View style={{ marginTop: 22 }}>
+        <Animated.View
+          entering={FadeInUp.duration(550).delay(300).springify().damping(14)}
+          style={{ marginTop: 22 }}
+        >
           <Text
             style={[
               theme.typography.overline,
@@ -172,7 +214,7 @@ export function DailyScreen() {
           >
             AFFIRMATION
           </Text>
-          <GlassCard padded={18}>
+          <GlassCard padded={18} glowSoft>
             <Text
               style={[
                 theme.typography.bodyBold,
@@ -182,10 +224,13 @@ export function DailyScreen() {
               {affirmation}
             </Text>
           </GlassCard>
-        </View>
+        </Animated.View>
 
         {/* Gratitude */}
-        <View style={{ marginTop: 22 }}>
+        <Animated.View
+          entering={FadeInUp.duration(550).delay(380).springify().damping(14)}
+          style={{ marginTop: 22 }}
+        >
           <Text
             style={[
               theme.typography.overline,
@@ -194,7 +239,7 @@ export function DailyScreen() {
           >
             GRATITUDE
           </Text>
-          <GlassCard padded={18}>
+          <GlassCard padded={18} glowSoft>
             <Text
               style={[
                 theme.typography.body,
@@ -240,10 +285,13 @@ export function DailyScreen() {
               />
             </View>
           </GlassCard>
-        </View>
+        </Animated.View>
 
         {/* Prayer + AI shortcuts */}
-        <View style={{ marginTop: 22, flexDirection: 'row', gap: 12 }}>
+        <Animated.View
+          entering={FadeInUp.duration(550).delay(460).springify().damping(14)}
+          style={{ marginTop: 22, flexDirection: 'row', gap: 12 }}
+        >
           <Pressable
             onPress={() => nav.navigate('PrayerGenerator')}
             style={[
@@ -290,8 +338,8 @@ export function DailyScreen() {
               Encouragement & verses
             </Text>
           </Pressable>
-        </View>
-      </ScrollView>
+        </Animated.View>
+      </Animated.ScrollView>
     </View>
   );
 }

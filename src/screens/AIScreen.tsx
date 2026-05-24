@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -11,14 +13,32 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Animated, {
+  FadeInLeft,
+  FadeInRight,
+  FadeInUp,
+} from 'react-native-reanimated';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { AnimatedVerse } from '../components/AnimatedVerse';
+import { AIAvatar } from '../components/AIAvatar';
+import { TypingDots } from '../components/TypingDots';
+import { ScrollToBottomFAB } from '../components/ScrollToBottomFAB';
+import { useToast } from '../components/Toast';
 import { useTheme } from '../theme';
-import { useAIMemoryStore, useChatStore, type ChatMessage } from '../state/store';
+import {
+  useAIMemoryStore,
+  useChatStore,
+  useJournalStore,
+  useSettingsStore,
+  type ChatMessage,
+} from '../state/store';
 import { formatResponse, generateEncouragement } from '../utils/ai';
+import type { EmotionId } from '../data/emotions';
 import * as haptics from '../utils/haptics';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -31,18 +51,41 @@ const PROMPTS = [
   'I feel completely alone.',
 ];
 
+// Show a timestamp under a bubble only when there's a meaningful gap since
+// the previous one. Below ~4 minutes we keep the UI quiet.
+const TIMESTAMP_GAP_MS = 4 * 60 * 1000;
+
+function relativeTime(then: number): string {
+  const diff = Date.now() - then;
+  if (diff < 30_000) return 'Just now';
+  if (diff < 60 * 60_000) return `${Math.floor(diff / 60_000)} min ago`;
+  const d = new Date(then);
+  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
 export function AIScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const toast = useToast();
   const messages = useChatStore((s) => s.messages);
   const push = useChatStore((s) => s.push);
   const clear = useChatStore((s) => s.clear);
+  const addJournal = useJournalStore((s) => s.addEntry);
   const recordIntent = useAIMemoryStore((s) => s.recordIntent);
+  const memoryEnabled = useAIMemoryStore((s) => s.enabled);
+  const emotionFrequency = useAIMemoryStore((s) => s.emotionFrequency);
+  const userName = useSettingsStore((s) => s.userName);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
   const [showPrayerCTA, setShowPrayerCTA] = useState(false);
+  const [showFAB, setShowFAB] = useState(false);
   const listRef = useRef<FlatList<ChatMessage>>(null);
+
+  // Only the most recent assistant message runs word-by-word reveal. Older
+  // ones render statically so scrolling history stays cheap.
+  const lastAssistantId =
+    [...messages].reverse().find((m) => m.role === 'assistant')?.id ?? null;
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -59,6 +102,59 @@ export function AIScreen() {
     }
   }, [messages.length]);
 
+  const scrollToBottom = () => {
+    listRef.current?.scrollToEnd({ animated: true });
+  };
+
+  const onLongPressMessage = (msg: ChatMessage) => {
+    haptics.heavy();
+    Alert.alert(
+      msg.role === 'assistant' ? 'Companion message' : 'Your message',
+      undefined,
+      [
+        {
+          text: 'Copy text',
+          onPress: async () => {
+            try {
+              await Clipboard.setStringAsync(msg.text);
+              toast.show({ message: 'Copied to clipboard', variant: 'success' });
+            } catch {
+              toast.show({ message: 'Could not copy', variant: 'error' });
+            }
+          },
+        },
+        ...(msg.role === 'assistant'
+          ? [
+              {
+                text: 'Save to journal',
+                onPress: () => {
+                  addJournal({
+                    title: 'From my companion',
+                    body: msg.text,
+                    mood: 'okay',
+                    emotions: [],
+                    gratitude: [],
+                  });
+                  toast.show({ message: 'Saved to journal', variant: 'success' });
+                },
+              },
+            ]
+          : []),
+        {
+          text: 'Share',
+          onPress: async () => {
+            try {
+              await Share.share({ message: msg.text });
+            } catch {
+              /* user cancelled */
+            }
+          },
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+    );
+  };
+
   const send = (text: string) => {
     const t = text.trim();
     if (!t) return;
@@ -72,10 +168,29 @@ export function AIScreen() {
         .filter((m) => m.role === 'assistant')
         .slice(-3)
         .map((m) => m.text);
-      const r = generateEncouragement(t, { recentAssistantTexts });
+      const recentUserTexts = messages
+        .filter((m) => m.role === 'user')
+        .slice(-3)
+        .map((m) => m.text);
+
+      // Pull the user's most-frequent emotion from AI memory (only when
+      // memory toggle is on). Used by the engine to acknowledge recurring
+      // themes — "you've been carrying anxiety for a while".
+      let topMemoryEmotion: EmotionId | undefined;
+      if (memoryEnabled && emotionFrequency) {
+        const entries = Object.entries(emotionFrequency) as Array<[EmotionId, number]>;
+        const top = entries.sort((a, b) => b[1] - a[1])[0];
+        if (top && top[1] >= 3) topMemoryEmotion = top[0];
+      }
+
+      const r = generateEncouragement(t, {
+        recentAssistantTexts,
+        recentUserTexts,
+        userName: userName.trim() || undefined,
+        topMemoryEmotion,
+      });
       push({ role: 'assistant', text: formatResponse(r) });
       setShowPrayerCTA(!!r.suggestPrayer);
-      // Record into AI memory (no-op when memory toggle is off).
       if (!r.crisis && (r.detectedEmotions.length || r.detectedTopics.length)) {
         recordIntent(r.detectedEmotions, r.detectedTopics);
       }
@@ -90,11 +205,47 @@ export function AIScreen() {
         onBack={() => nav.goBack()}
         title="Companion"
         right={
-          <Pressable onPress={clear} hitSlop={10}>
+          <Pressable
+            onPress={() => {
+              Alert.alert(
+                'Clear conversation?',
+                'This permanently deletes all messages with your companion.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Clear',
+                    style: 'destructive',
+                    onPress: () => {
+                      clear();
+                      toast.show({ message: 'Conversation cleared', variant: 'info' });
+                    },
+                  },
+                ],
+              );
+            }}
+            hitSlop={10}
+          >
             <Ionicons name="refresh-outline" size={20} color={theme.colors.textMuted} />
           </Pressable>
         }
       />
+
+      {/* Identity strip — premium 'who you're talking to' card under the header */}
+      <View style={[styles.identityRow, { borderColor: theme.colors.border }]}>
+        <AIAvatar size={36} pulse />
+        <View style={{ marginLeft: 12, flex: 1 }}>
+          <Text style={[theme.typography.bodyBold, { color: theme.colors.text, fontSize: 15 }]}>
+            OneFaith Companion
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: 6 }}>
+            <View style={styles.onlineDot} />
+            <Text style={[styles.statusLine, { color: '#3FB47C' }]}>
+              ONLINE · LISTENS WITHOUT JUDGEMENT
+            </Text>
+          </View>
+        </View>
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -104,7 +255,39 @@ export function AIScreen() {
           ref={listRef}
           data={messages}
           keyExtractor={(m) => m.id}
-          renderItem={({ item }) => <Bubble msg={item} />}
+          renderItem={({ item, index }) => {
+            const prev = messages[index - 1];
+            const showTimestamp =
+              !prev || item.createdAt - prev.createdAt > TIMESTAMP_GAP_MS;
+            const animateReveal =
+              item.role === 'assistant' && item.id === lastAssistantId;
+            return (
+              <View>
+                {showTimestamp ? (
+                  <Text style={[styles.timestamp, { color: theme.colors.textMuted }]}>
+                    {relativeTime(item.createdAt)}
+                  </Text>
+                ) : null}
+                <Bubble
+                  msg={item}
+                  animateReveal={animateReveal}
+                  onLongPress={() => onLongPressMessage(item)}
+                />
+              </View>
+            );
+          }}
+          removeClippedSubviews
+          initialNumToRender={12}
+          maxToRenderPerBatch={8}
+          windowSize={7}
+          onScroll={(e) => {
+            const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+            const distanceFromBottom =
+              contentSize.height - (contentOffset.y + layoutMeasurement.height);
+            const next = distanceFromBottom > 220;
+            if (next !== showFAB) setShowFAB(next);
+          }}
+          scrollEventThrottle={120}
           contentContainerStyle={{
             paddingHorizontal: 20,
             paddingTop: 10,
@@ -113,26 +296,42 @@ export function AIScreen() {
           }}
           ListFooterComponent={
             thinking ? (
-              <View
-                style={[
-                  styles.thinking,
-                  {
-                    backgroundColor: theme.colors.bgGlass,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
+              <Animated.View
+                entering={FadeInUp.duration(280).springify().damping(15)}
+                style={styles.thinkingRow}
               >
-                <Text style={[theme.typography.body, { color: theme.colors.textMuted }]}>
-                  Listening…
-                </Text>
-              </View>
+                <AIAvatar size={28} />
+                <View
+                  style={[
+                    styles.thinking,
+                    {
+                      backgroundColor: theme.colors.bgGlass,
+                      borderColor: theme.colors.border,
+                    },
+                  ]}
+                >
+                  <TypingDots color={theme.colors.primary} />
+                </View>
+              </Animated.View>
             ) : null
           }
         />
 
+        <ScrollToBottomFAB
+          visible={showFAB}
+          onPress={() => {
+            haptics.tap();
+            scrollToBottom();
+          }}
+          bottom={insets.bottom + 168}
+        />
+
         {/* Prayer CTA — only shown when the last response was emotionally appropriate */}
         {showPrayerCTA && !thinking ? (
-          <View style={styles.ctaWrap}>
+          <Animated.View
+            entering={FadeInUp.duration(260).springify().damping(15)}
+            style={styles.ctaWrap}
+          >
             <Pressable
               onPress={() => {
                 haptics.tap();
@@ -159,7 +358,7 @@ export function AIScreen() {
                 Not now
               </Text>
             </Pressable>
-          </View>
+          </Animated.View>
         ) : null}
 
         {/* Suggestion chips */}
@@ -233,45 +432,106 @@ export function AIScreen() {
   );
 }
 
-function Bubble({ msg }: { msg: ChatMessage }) {
+const Bubble = React.memo(function Bubble({
+  msg,
+  animateReveal,
+  onLongPress,
+}: {
+  msg: ChatMessage;
+  animateReveal: boolean;
+  onLongPress: () => void;
+}) {
   const theme = useTheme();
   const isUser = msg.role === 'user';
+
   if (isUser) {
     return (
-      <View style={{ alignItems: 'flex-end' }}>
-        <LinearGradient
-          colors={['#2F5FB0', '#5B9BE3']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.userBubble, { maxWidth: '85%' }]}
-        >
-          <Text style={[theme.typography.body, { color: '#fff', fontSize: 15, lineHeight: 22 }]}>
-            {msg.text}
-          </Text>
-        </LinearGradient>
-      </View>
+      <Animated.View
+        entering={FadeInRight.duration(320).springify().damping(15)}
+        style={{ alignItems: 'flex-end' }}
+      >
+        <Pressable onLongPress={onLongPress} delayLongPress={300}>
+          <LinearGradient
+            colors={['#2F5FB0', '#5B9BE3']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.userBubble, { maxWidth: '85%' }]}
+          >
+            {/* Premium top-gloss highlight on user bubble */}
+            <LinearGradient
+              pointerEvents="none"
+              colors={['rgba(255,255,255,0.22)', 'rgba(255,255,255,0)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={[StyleSheet.absoluteFillObject, { borderRadius: 20, height: '55%' }]}
+            />
+            <Text style={[theme.typography.body, { color: '#fff', fontSize: 15, lineHeight: 22 }]}>
+              {msg.text}
+            </Text>
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
     );
   }
+
+  // Assistant bubble with avatar gutter
   return (
-    <View
-      style={[
-        styles.aiBubble,
-        {
-          backgroundColor: theme.colors.bgGlass,
-          borderColor: theme.colors.border,
-          maxWidth: '92%',
-        },
-      ]}
+    <Animated.View
+      entering={FadeInLeft.duration(360).springify().damping(15)}
+      style={{ flexDirection: 'row', alignItems: 'flex-end', maxWidth: '92%' }}
     >
-      <Text style={[theme.typography.body, { color: theme.colors.text, fontSize: 15, lineHeight: 23 }]}>
-        {msg.text}
-      </Text>
-    </View>
+      <View style={{ marginRight: 8, marginBottom: 2 }}>
+        <AIAvatar size={26} />
+      </View>
+      <Pressable onLongPress={onLongPress} delayLongPress={300} style={{ flex: 1 }}>
+        <View
+          style={[
+            styles.aiBubble,
+            {
+              backgroundColor: theme.colors.bgGlass,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          {animateReveal ? (
+            <AnimatedVerse
+              text={msg.text}
+              perWordDelay={28}
+              duration={300}
+              maxAnimatedWords={36}
+              style={
+                {
+                  ...theme.typography.body,
+                  color: theme.colors.text,
+                  fontSize: 15,
+                  lineHeight: 23,
+                } as any
+              }
+            />
+          ) : (
+            <Text style={[theme.typography.body, { color: theme.colors.text, fontSize: 15, lineHeight: 23 }]}>
+              {msg.text}
+            </Text>
+          )}
+        </View>
+      </Pressable>
+    </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
-  userBubble: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 20, borderTopRightRadius: 6 },
+  userBubble: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderTopRightRadius: 6,
+    overflow: 'hidden',
+    shadowColor: '#1B3578',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 3,
+  },
   aiBubble: {
     padding: 14,
     borderRadius: 20,
@@ -279,12 +539,47 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     alignSelf: 'flex-start',
   },
+  thinkingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   thinking: {
-    alignSelf: 'flex-start',
-    padding: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderRadius: 20,
     borderTopLeftRadius: 6,
     borderWidth: StyleSheet.hairlineWidth,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  identityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  onlineDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#3FB47C',
+  },
+  statusLine: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  timestamp: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textAlign: 'center',
+    marginTop: 6,
+    marginBottom: 2,
+    opacity: 0.75,
   },
   ctaWrap: {
     flexDirection: 'row',

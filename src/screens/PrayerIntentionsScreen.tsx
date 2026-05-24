@@ -329,14 +329,35 @@ function Composer({
   );
 }
 
-function IntentionCard({ item }: { item: PrayerIntention }) {
+const IntentionCard = React.memo(function IntentionCard({
+  item,
+}: {
+  item: PrayerIntention;
+}) {
   const theme = useTheme();
   const prayFor = usePrayerIntentionsStore((s) => s.prayFor);
   const remove = usePrayerIntentionsStore((s) => s.remove);
+  const alreadyPrayed = usePrayerIntentionsStore((s) => s.prayedFor.includes(item.id));
 
   const onPray = () => {
-    haptics.success();
-    prayFor(item.id);
+    if (alreadyPrayed) {
+      haptics.select();
+      Alert.alert(
+        'Already prayed',
+        'You have already prayed for this intention. Thank you for lifting it up.',
+        [{ text: 'OK' }],
+      );
+      return;
+    }
+    const ok = prayFor(item.id);
+    if (ok) {
+      haptics.success();
+    } else {
+      // race / edge case — refresh state
+      Alert.alert('Already prayed', 'You have already prayed for this intention.', [
+        { text: 'OK' },
+      ]);
+    }
   };
 
   const onLongPress = () => {
@@ -405,15 +426,31 @@ function IntentionCard({ item }: { item: PrayerIntention }) {
             </Text>
           </View>
           <Pressable onPress={onPray} hitSlop={8}>
-            <View style={[styles.prayBtn, { borderColor: theme.colors.primary }]}>
-              <Ionicons name="add" size={16} color={theme.colors.primary} />
+            <View
+              style={[
+                styles.prayBtn,
+                {
+                  borderColor: alreadyPrayed ? theme.colors.success : theme.colors.primary,
+                  backgroundColor: alreadyPrayed ? 'rgba(21,119,82,0.10)' : 'transparent',
+                },
+              ]}
+            >
+              <Ionicons
+                name={alreadyPrayed ? 'checkmark' : 'add'}
+                size={16}
+                color={alreadyPrayed ? theme.colors.success : theme.colors.primary}
+              />
               <Text
                 style={[
                   theme.typography.bodyBold,
-                  { color: theme.colors.primary, marginLeft: 6, fontSize: 13 },
+                  {
+                    color: alreadyPrayed ? theme.colors.success : theme.colors.primary,
+                    marginLeft: 6,
+                    fontSize: 13,
+                  },
                 ]}
               >
-                Pray for this
+                {alreadyPrayed ? 'Prayed' : 'Pray for this'}
               </Text>
             </View>
           </Pressable>
@@ -421,7 +458,7 @@ function IntentionCard({ item }: { item: PrayerIntention }) {
       </GlassCard>
     </Pressable>
   );
-}
+});
 
 function FieldLabel({
   children,

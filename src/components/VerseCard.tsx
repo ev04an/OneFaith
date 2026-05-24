@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
+import { AnimatedVerse } from './AnimatedVerse';
 import type { Verse } from '../data/verses';
 import type { GradientKey } from '../theme/gradients';
 
@@ -12,11 +13,26 @@ type Props = {
   compact?: boolean;
   onPress?: () => void;
   trailing?: React.ReactNode;
+  /** When true, the verse text reveals word-by-word on mount. Default true. */
+  animateReveal?: boolean;
 };
 
-export function VerseCard({ verse, gradient = 'primary', compact, onPress, trailing }: Props) {
+export function VerseCard({
+  verse,
+  gradient = 'primary',
+  compact,
+  onPress,
+  trailing,
+  animateReveal = true,
+}: Props) {
   const theme = useTheme();
   const stops = theme.gradients[gradient] as readonly string[];
+
+  const verseStyle = [
+    theme.typography.verse,
+    styles.text,
+    compact && { fontSize: 17, lineHeight: 26 },
+  ].filter(Boolean) as any;
 
   return (
     <Pressable onPress={onPress} disabled={!onPress} style={[styles.wrap, theme.shadow.soft]}>
@@ -26,6 +42,14 @@ export function VerseCard({ verse, gradient = 'primary', compact, onPress, trail
         end={{ x: 1, y: 1 }}
         style={[styles.bg, { borderRadius: theme.radius.lg }]}
       >
+        {/* Premium top gloss — a thin lit edge for depth */}
+        <LinearGradient
+          pointerEvents="none"
+          colors={['rgba(255,255,255,0.22)', 'rgba(255,255,255,0)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={[StyleSheet.absoluteFillObject, { borderRadius: theme.radius.lg, height: '55%' }]}
+        />
         <View style={styles.headerRow}>
           <View style={styles.refPill}>
             <Ionicons name="book-outline" size={12} color="#fff" />
@@ -33,16 +57,23 @@ export function VerseCard({ verse, gradient = 'primary', compact, onPress, trail
           </View>
           {trailing}
         </View>
-        <Text
-          style={[
-            theme.typography.verse,
-            styles.text,
-            compact && { fontSize: 17, lineHeight: 26 },
-          ]}
-          numberOfLines={compact ? 4 : undefined}
-        >
-          “{verse.text}”
-        </Text>
+        {animateReveal && !compact ? (
+          <View style={{ marginTop: 14 }}>
+            <AnimatedVerse
+              text={verse.text}
+              withQuotes
+              startDelay={120}
+              style={verseStyle}
+            />
+          </View>
+        ) : (
+          <Text
+            style={verseStyle}
+            numberOfLines={compact ? 4 : undefined}
+          >
+            “{verse.text}”
+          </Text>
+        )}
         {!compact && verse.reflection ? (
           <Text style={[theme.typography.body, styles.reflection]}>{verse.reflection}</Text>
         ) : null}

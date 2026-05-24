@@ -171,12 +171,23 @@ export function GradientButton({
               alignItems: 'center',
               justifyContent: 'center',
               gap: 8,
+              position: 'relative',
             },
           ]}
         >
-          {icon && <Ionicons name={icon} size={18} color="#fff" />}
-          <Text style={[font, { color: '#fff' }, textStyle]}>{label}</Text>
-          {iconRight && <Ionicons name={iconRight} size={18} color="#fff" />}
+          {/* Premium top-gloss highlight — fades from a soft white to fully
+              transparent in the top third, integrates with the gradient so it
+              reads as a lit surface, not a nested box. */}
+          <LinearGradient
+            pointerEvents="none"
+            colors={['rgba(255,255,255,0.28)', 'rgba(255,255,255,0)'] as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={[StyleSheet.absoluteFillObject, { borderRadius: radius, height: '60%' }]}
+          />
+          {icon && <Ionicons name={icon} size={18} color="#fff" style={{ zIndex: 1 }} />}
+          <Text style={[font, { color: '#fff', zIndex: 1 }, textStyle]}>{label}</Text>
+          {iconRight && <Ionicons name={iconRight} size={18} color="#fff" style={{ zIndex: 1 }} />}
         </LinearGradient>
       </Pressable>
     </Animated.View>

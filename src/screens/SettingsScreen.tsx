@@ -1,11 +1,11 @@
 import React from 'react';
 import {
   Alert,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
@@ -24,6 +24,7 @@ import { AnimatedBackground } from '../components/AnimatedBackground';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { GlassCard } from '../components/GlassCard';
 import { GradientButton } from '../components/GradientButton';
+import { CustomSwitch } from '../components/CustomSwitch';
 import { useTheme } from '../theme';
 import { ACCENTS, type AccentKey } from '../theme/accents';
 import type { FontScale } from '../theme/typography';
@@ -503,6 +504,24 @@ export function SettingsScreen() {
               label="Scripture translation"
               value="World English Bible (public domain)"
             />
+            <Divider />
+            <LinkRow
+              icon="shield-checkmark-outline"
+              label="Privacy Policy"
+              value="How we handle your data"
+              onPress={() => {
+                Linking.openURL('https://onefaith-app.netlify.app/privacy.html').catch(() => {});
+              }}
+            />
+            <Divider />
+            <LinkRow
+              icon="document-text-outline"
+              label="Terms of Use"
+              value="The rules of the road"
+              onPress={() => {
+                Linking.openURL('https://onefaith-app.netlify.app/terms.html').catch(() => {});
+              }}
+            />
           </GlassCard>
         </Section>
 
@@ -602,14 +621,9 @@ function ToggleRow({
           </Text>
         ) : null}
       </View>
-      <Switch
+      <CustomSwitch
         value={value}
-        onValueChange={(v) => {
-          haptics.select();
-          onChange(v);
-        }}
-        trackColor={{ true: theme.colors.primary, false: 'rgba(120,120,150,0.4)' }}
-        thumbColor="#fff"
+        onValueChange={onChange}
       />
     </View>
   );

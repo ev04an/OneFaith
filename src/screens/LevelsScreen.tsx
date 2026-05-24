@@ -4,10 +4,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { GlassCard } from '../components/GlassCard';
 import { LevelBadge } from '../components/LevelBadge';
+import { ShimmerOverlay } from '../components/ShimmerOverlay';
 import { useTheme } from '../theme';
 import { BADGES, LEVELS, getEarnedBadges, getLevelForDays } from '../data/levels';
 import { useStreakStore } from '../state/store';
@@ -41,7 +43,9 @@ export function LevelsScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <GlassCard>
+        <Animated.View entering={FadeInUp.duration(620).springify().damping(14)}>
+        <GlassCard depth glowSoft style={{ overflow: 'hidden' }}>
+          <ShimmerOverlay delay={700} duration={1900} stripeWidth={150} />
           <Text style={[theme.typography.overline, { color: theme.colors.textFaint }]}>
             YOU ARE HERE
           </Text>
@@ -57,26 +61,35 @@ export function LevelsScreen() {
             {current.description}
           </Text>
         </GlassCard>
+        </Animated.View>
 
-        <Text style={[theme.typography.h2, { color: theme.colors.text, marginTop: 26, marginBottom: 10 }]}>
+        <Animated.Text
+          entering={FadeInUp.duration(500).delay(160).springify().damping(14)}
+          style={[theme.typography.h2, { color: theme.colors.text, marginTop: 26, marginBottom: 10 }]}
+        >
           The Seven Levels
-        </Text>
+        </Animated.Text>
 
         <View style={{ gap: 10 }}>
-          {LEVELS.map((l) => {
+          {LEVELS.map((l, i) => {
             const reached = days >= l.threshold;
             return (
-              <View
+              <Animated.View
                 key={l.id}
+                entering={FadeInUp.duration(500).delay(220 + i * 70).springify().damping(14)}
                 style={[
                   styles.levelRow,
                   {
                     borderColor: reached ? l.glow : theme.colors.border,
                     backgroundColor: theme.colors.bgGlass,
+                    overflow: 'hidden',
                   },
                   reached && l.id === current.id && theme.shadow.glow,
                 ]}
               >
+                {reached && l.id === current.id ? (
+                  <ShimmerOverlay delay={1100 + i * 80} duration={1800} stripeWidth={120} />
+                ) : null}
                 <Text
                   style={{
                     color: reached ? theme.colors.text : theme.colors.textFaint,
@@ -109,34 +122,54 @@ export function LevelsScreen() {
                 ) : (
                   <Ionicons name="lock-closed" size={18} color={theme.colors.textMuted} />
                 )}
-              </View>
+              </Animated.View>
             );
           })}
         </View>
 
-        <Text style={[theme.typography.h2, { color: theme.colors.text, marginTop: 28, marginBottom: 12 }]}>
+        <Animated.Text
+          entering={FadeInUp.duration(500).delay(720).springify().damping(14)}
+          style={[theme.typography.h2, { color: theme.colors.text, marginTop: 28, marginBottom: 12 }]}
+        >
           Badges
-        </Text>
+        </Animated.Text>
         <View style={styles.badgeGrid}>
-          {BADGES.map((b) => (
-            <View key={b.id} style={styles.badgeCell}>
-              <LevelBadge badge={b} earned={earned.some((e) => e.id === b.id)} />
-              <Text
-                style={[
-                  theme.typography.caption,
-                  {
-                    color: theme.colors.textMuted,
-                    marginTop: 8,
-                    textAlign: 'center',
-                    maxWidth: 120,
-                    lineHeight: 17,
-                  },
-                ]}
+          {BADGES.map((b, i) => {
+            const isEarned = earned.some((e) => e.id === b.id);
+            return (
+              <Animated.View
+                key={b.id}
+                entering={FadeInUp.duration(500).delay(800 + i * 90).springify().damping(14)}
+                style={[styles.badgeCell, { overflow: 'hidden', borderRadius: 18 }]}
               >
-                {b.description}
-              </Text>
-            </View>
-          ))}
+                <View style={{ position: 'relative' }}>
+                  <LevelBadge badge={b} earned={isEarned} />
+                  {isEarned ? (
+                    <ShimmerOverlay
+                      delay={1400 + i * 120}
+                      duration={1900}
+                      stripeWidth={90}
+                      color="rgba(255,255,255,0.42)"
+                    />
+                  ) : null}
+                </View>
+                <Text
+                  style={[
+                    theme.typography.caption,
+                    {
+                      color: theme.colors.textMuted,
+                      marginTop: 8,
+                      textAlign: 'center',
+                      maxWidth: 120,
+                      lineHeight: 17,
+                    },
+                  ]}
+                >
+                  {b.description}
+                </Text>
+              </Animated.View>
+            );
+          })}
         </View>
       </ScrollView>
     </View>

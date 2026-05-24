@@ -13,6 +13,10 @@ import Animated, {
 // A small SVG of a pilgrim — black stickman carrying a wooden cross on the
 // shoulder, legs swinging back-and-forth to suggest walking. Used as a brief
 // loading state while Bible content is being parsed or pulled from storage.
+//
+// Animation uses react-native-svg's typed rotation / translateY props on <G>
+// rather than SVG-string transforms — the latter throw a ClassCastException
+// under the New Architecture (Fabric).
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 
@@ -35,30 +39,26 @@ export function PilgrimLoader({ size = 72, color = '#0F1F4B' }: Props) {
   }, [t]);
 
   // Legs rotate around the hip joint at (42, 60). Left and right phase-offset
-  // so they swap which one is forward.
-  const leftLegProps = useAnimatedProps(() => {
-    const a = interpolate(t.value, [0, 1], [-22, 22]);
-    return { transform: `rotate(${a} 42 60)` } as any;
-  });
-  const rightLegProps = useAnimatedProps(() => {
-    const a = interpolate(t.value, [0, 1], [22, -22]);
-    return { transform: `rotate(${a} 42 60)` } as any;
-  });
+  // so they swap which one is forward. We pass rotation as a typed number
+  // (degrees) and set originX/originY statically on the G element.
+  const leftLegProps = useAnimatedProps(() => ({
+    rotation: interpolate(t.value, [0, 1], [-22, 22]),
+  }));
+  const rightLegProps = useAnimatedProps(() => ({
+    rotation: interpolate(t.value, [0, 1], [22, -22]),
+  }));
 
-  // Whole figure bobs slightly up/down to match the leg cadence (two bobs per
-  // full walk cycle — uses sin shape via absolute distance from 0.5).
+  // Whole-figure bob — translateY in pixels. Two bobs per walk cycle.
   const figureProps = useAnimatedProps(() => {
     const distFromMid = Math.abs(t.value - 0.5) * 2; // 0..1..0
-    const dy = interpolate(distFromMid, [0, 1], [-1.5, 0]);
-    return { transform: `translate(0 ${dy})` } as any;
+    return { translateY: interpolate(distFromMid, [0, 1], [-1.5, 0]) };
   });
 
   return (
     <View style={[styles.wrap, { width: size, height: size }]}>
       <Svg width={size} height={size} viewBox="0 0 100 100">
         <AnimatedG animatedProps={figureProps}>
-          {/* Cross on the right shoulder, leaning back. Drawn first so the
-              figure's arm appears in front. */}
+          {/* Cross on the right shoulder, leaning back. */}
           <Line
             x1="58"
             y1="14"
@@ -92,8 +92,7 @@ export function PilgrimLoader({ size = 72, color = '#0F1F4B' }: Props) {
             strokeLinecap="round"
           />
 
-          {/* Arm reaching back to grip the cross (single line from shoulder
-              area up to the cross beam). */}
+          {/* Arm reaching back to grip the cross. */}
           <Line
             x1="42"
             y1="34"
@@ -114,8 +113,8 @@ export function PilgrimLoader({ size = 72, color = '#0F1F4B' }: Props) {
             strokeLinecap="round"
           />
 
-          {/* Legs — animated. */}
-          <AnimatedG animatedProps={leftLegProps}>
+          {/* Legs — animated rotation around the hip point (42, 60). */}
+          <AnimatedG animatedProps={leftLegProps} originX="42" originY="60">
             <Line
               x1="42"
               y1="60"
@@ -126,7 +125,7 @@ export function PilgrimLoader({ size = 72, color = '#0F1F4B' }: Props) {
               strokeLinecap="round"
             />
           </AnimatedG>
-          <AnimatedG animatedProps={rightLegProps}>
+          <AnimatedG animatedProps={rightLegProps} originX="42" originY="60">
             <Line
               x1="42"
               y1="60"

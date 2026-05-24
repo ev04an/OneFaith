@@ -26,7 +26,7 @@ import { SoftCurves } from '../components/SoftCurves';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { useTheme } from '../theme';
 import { generatePrayer, type GeneratedPrayer } from '../utils/prayerGenerator';
-import { useSavedPrayersStore, useJournalStore } from '../state/store';
+import { useSavedPrayersStore, useJournalStore, useSettingsStore } from '../state/store';
 import * as haptics from '../utils/haptics';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -76,6 +76,7 @@ export function PrayerGeneratorScreen() {
   const seedRef = useRef(0);
   const addSaved = useSavedPrayersStore((s) => s.add);
   const addJournal = useJournalStore((s) => s.addEntry);
+  const userName = useSettingsStore((s) => s.userName);
 
   useEffect(() => {
     return () => {
@@ -112,7 +113,9 @@ export function PrayerGeneratorScreen() {
     setTimeout(() => {
       seedRef.current = seedRef.current + 1;
       const prompt = buildPrompt();
-      const result = generatePrayer(prompt, Date.now() + seedRef.current);
+      const result = generatePrayer(prompt, Date.now() + seedRef.current, {
+        userName: userName.trim() || undefined,
+      });
       setGenerated(result);
       setGenerating(false);
     }, 700 + Math.random() * 500);

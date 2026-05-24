@@ -363,16 +363,22 @@ export type PrayerIntention = {
 
 type PrayerIntentionsState = {
   intentions: PrayerIntention[];
+  /** Intention IDs the current user has already prayed for. */
+  prayedFor: string[];
   add: (p: Omit<PrayerIntention, 'id' | 'createdAt' | 'prayCount'>) => string;
   remove: (id: string) => void;
-  prayFor: (id: string) => void;
+  /** Returns true when the prayer was newly recorded, false if the user has
+   *  already prayed for this intention before. */
+  prayFor: (id: string) => boolean;
+  hasPrayed: (id: string) => boolean;
   clear: () => void;
 };
 
 export const usePrayerIntentionsStore = create<PrayerIntentionsState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       intentions: [],
+      prayedFor: [],
       add: (p) => {
         const id = `pi-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
         set((s) => ({
@@ -384,14 +390,22 @@ export const usePrayerIntentionsStore = create<PrayerIntentionsState>()(
         return id;
       },
       remove: (id) =>
-        set((s) => ({ intentions: s.intentions.filter((i) => i.id !== id) })),
-      prayFor: (id) =>
+        set((s) => ({
+          intentions: s.intentions.filter((i) => i.id !== id),
+          prayedFor: s.prayedFor.filter((p) => p !== id),
+        })),
+      prayFor: (id) => {
+        if (get().prayedFor.includes(id)) return false;
         set((s) => ({
           intentions: s.intentions.map((i) =>
             i.id === id ? { ...i, prayCount: i.prayCount + 1 } : i,
           ),
-        })),
-      clear: () => set({ intentions: [] }),
+          prayedFor: [...s.prayedFor, id],
+        }));
+        return true;
+      },
+      hasPrayed: (id) => get().prayedFor.includes(id),
+      clear: () => set({ intentions: [], prayedFor: [] }),
     }),
     {
       name: 'onefaith-prayer-intentions',

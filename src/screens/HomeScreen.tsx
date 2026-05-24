@@ -7,6 +7,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Animated, {
   Easing,
+  interpolate,
+  useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -15,6 +17,9 @@ import Animated, {
 import { SoftCurves } from '../components/SoftCurves';
 import { HolidayBanner } from '../components/HolidayBanner';
 import { PressableScale } from '../components/PressableScale';
+import { AnimatedCounter } from '../components/AnimatedCounter';
+import { AnimatedVerse } from '../components/AnimatedVerse';
+import { StreakRing } from '../components/StreakRing';
 import { useTheme } from '../theme';
 import { getVerseOfTheDay } from '../data/verses';
 import { getActiveHoliday } from '../data/holidays';
@@ -81,6 +86,29 @@ export function HomeScreen() {
     transform: [{ translateY: (1 - s3.value) * 30 }],
   }));
 
+  // Premium scroll parallax — hero verse card slides up slightly slower than
+  // the page, fades, and gently scales down as the user scrolls. Single shared
+  // value drives every transform so it stays at 60fps.
+  const scrollY = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      scrollY.value = e.contentOffset.y;
+    },
+  });
+  // Translate-only parallax. Scaling a shadowed card on Android re-rasterises
+  // the shadow every frame; that single change was a major source of the
+  // scroll jank. Plain translateY runs purely on the compositor.
+  const heroParallax = useAnimatedStyle(() => {
+    const translateY = interpolate(scrollY.value, [-100, 0, 200], [-30, 0, -45]);
+    const opacity = interpolate(scrollY.value, [0, 180, 280], [1, 0.85, 0.65]);
+    return { transform: [{ translateY }], opacity };
+  });
+  const welcomeParallax = useAnimatedStyle(() => {
+    const translateY = interpolate(scrollY.value, [0, 200], [0, -24]);
+    const opacity = interpolate(scrollY.value, [0, 140, 220], [1, 0.7, 0.45]);
+    return { transform: [{ translateY }], opacity };
+  });
+
   const greeting = (() => {
     const h = new Date().getHours();
     if (h < 5) return 'Resting in His Grace';
@@ -93,7 +121,7 @@ export function HomeScreen() {
   return (
     <View style={{ flex: 1 }}>
       <SoftCurves />
-      <ScrollView
+      <Animated.ScrollView
         contentContainerStyle={{
           paddingTop:
             Math.max(insets.top, Platform.OS === 'ios' ? 54 : 24) + 12,
@@ -101,9 +129,11 @@ export function HomeScreen() {
           paddingHorizontal: theme.spacing.screen,
         }}
         showsVerticalScrollIndicator={false}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
       >
         {/* Welcome */}
-        <Animated.View style={[styles.headerRow, headerStyle]}>
+        <Animated.View style={[styles.headerRow, headerStyle, welcomeParallax]}>
           <View style={{ flex: 1 }}>
             <Text
               style={[
@@ -149,7 +179,7 @@ export function HomeScreen() {
         ) : null}
 
         {/* Daily verse hero */}
-        <Animated.View style={heroStyle}>
+        <Animated.View style={[heroStyle, heroParallax]}>
         <Pressable
           onPress={() => nav.navigate('VerseDetail', { verseId: verse.id })}
           style={{ marginTop: 22 }}
@@ -158,8 +188,16 @@ export function HomeScreen() {
             colors={['#5B9BE3', '#3A6EBF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={[styles.verseHero, theme.shadow.soft]}
+            style={[styles.verseHero, theme.shadow.depth]}
           >
+            {/* Premium top gloss — integrates with the gradient as a lit edge */}
+            <LinearGradient
+              pointerEvents="none"
+              colors={['rgba(255,255,255,0.22)', 'rgba(255,255,255,0)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={[StyleSheet.absoluteFillObject, { borderRadius: 24, height: '55%' }]}
+            />
             {/* Decorative shapes */}
             <View style={[styles.heroCircle, { top: -50, right: -30, width: 160, height: 160, opacity: 0.18 }]} />
             <View style={[styles.heroCircle, { bottom: -40, left: -20, width: 120, height: 120, opacity: 0.14 }]} />
@@ -182,13 +220,67 @@ export function HomeScreen() {
               </Pressable>
             </View>
 
-            <Text style={styles.heroVerse} numberOfLines={4}>
-              "{verse.text}"
-            </Text>
+            <View style={{ marginTop: 18 }}>
+              <AnimatedVerse
+                text={verse.text}
+                withQuotes
+                startDelay={420}
+                perWordDelay={42}
+                style={styles.heroVerse}
+              />
+            </View>
             <Text style={styles.heroRef}>— {verse.reference}</Text>
           </LinearGradient>
         </Pressable>
         </Animated.View>
+
+        {/* Streak ring banner — signature premium element, only when there's an active streak */}
+        {streakStartedAt ? (
+          <Animated.View style={[restStyle, { marginTop: 22 }]}>
+            <PressableScale
+              onPress={() =>
+                (nav as any).navigate('MainTabs', { screen: 'Recovery' })
+              }
+              glow
+              style={[
+                styles.streakBanner,
+                {
+                  backgroundColor: theme.colors.bgGlassStrong,
+                  borderColor: theme.colors.borderStrong,
+                },
+                theme.shadow.softLight,
+              ]}
+            >
+              <StreakRing days={days} target={30} size={88} stroke={9} />
+              <View style={{ flex: 1, marginLeft: 18 }}>
+                <Text
+                  style={[
+                    theme.typography.overline,
+                    { color: theme.colors.primary, letterSpacing: 1.6 },
+                  ]}
+                >
+                  CURRENT STREAK
+                </Text>
+                <Text
+                  style={[
+                    theme.typography.h2,
+                    { color: theme.colors.text, marginTop: 4, fontSize: 20 },
+                  ]}
+                >
+                  {days === 1 ? 'One day strong' : `${days} days strong`}
+                </Text>
+                <Text
+                  style={[
+                    theme.typography.caption,
+                    { color: theme.colors.textMuted, marginTop: 4 },
+                  ]}
+                >
+                  Tap to open your Recovery journey →
+                </Text>
+              </View>
+            </PressableScale>
+          </Animated.View>
+        ) : null}
 
         {/* Action grid — mixed sizes per reference */}
         <Animated.View style={[{ marginTop: 22 }, restStyle]}>
@@ -455,12 +547,12 @@ export function HomeScreen() {
             </Pressable>
           )}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
 
-function CategoryChip({
+const CategoryChip = React.memo(function CategoryChip({
   emoji,
   label,
   tint,
@@ -505,9 +597,9 @@ function CategoryChip({
       </Text>
     </PressableScale>
   );
-}
+});
 
-function ActionCard({
+const ActionCard = React.memo(function ActionCard({
   icon,
   label,
   subtitle,
@@ -591,7 +683,7 @@ function ActionCard({
       </View>
     </PressableScale>
   );
-}
+});
 
 const styles = StyleSheet.create({
   headerRow: {
@@ -641,7 +733,6 @@ const styles = StyleSheet.create({
     fontSize: 19,
     lineHeight: 27,
     fontWeight: '500',
-    marginTop: 18,
   },
   heroRef: {
     color: 'rgba(255,255,255,0.92)',
@@ -683,6 +774,13 @@ const styles = StyleSheet.create({
     gap: 14,
     padding: 16,
     borderRadius: 22,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  streakBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+    borderRadius: 24,
     borderWidth: StyleSheet.hairlineWidth,
   },
   categoryChip: {

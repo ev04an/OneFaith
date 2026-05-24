@@ -1,7 +1,8 @@
-import React from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { LayoutChangeEvent, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useAnimatedStyle,
@@ -54,6 +55,30 @@ export function Tabs() {
 
 function CustomTabBar({ state, navigation }: any) {
   const theme = useTheme();
+  const [tabWidth, setTabWidth] = useState(0);
+  const indicatorX = useSharedValue(0);
+
+  // Slide the gradient indicator under the active tab. Position is measured
+  // once we know the layout width, then sprung between tab slots.
+  React.useEffect(() => {
+    if (tabWidth > 0) {
+      indicatorX.value = withSpring(state.index * tabWidth, {
+        damping: 18,
+        stiffness: 220,
+        mass: 0.6,
+      });
+    }
+  }, [state.index, tabWidth, indicatorX]);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+  }));
+
+  const onRowLayout = (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width / Math.max(1, state.routes.length);
+    if (Math.abs(w - tabWidth) > 0.5) setTabWidth(w);
+  };
+
   return (
     <View
       pointerEvents="box-none"
@@ -82,7 +107,27 @@ function CustomTabBar({ state, navigation }: any) {
           ]}
         />
       </View>
-      <View style={styles.row}>
+
+      {/* Sliding gradient indicator — a soft glow that follows the active tab */}
+      {tabWidth > 0 ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.indicator,
+            { width: tabWidth },
+            indicatorStyle,
+          ]}
+        >
+          <LinearGradient
+            colors={['rgba(91,155,227,0)', 'rgba(91,155,227,0.55)', 'rgba(91,155,227,0)'] as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.indicatorBar}
+          />
+        </Animated.View>
+      ) : null}
+
+      <View style={styles.row} onLayout={onRowLayout}>
         {state.routes.map((route: any, index: number) => {
           const focused = state.index === index;
           const name = route.name as keyof TabsParamList;
@@ -217,5 +262,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.4,
     marginTop: 4,
+  },
+  indicator: {
+    position: 'absolute',
+    top: 6,
+    height: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  indicatorBar: {
+    width: '60%',
+    height: 3,
+    borderRadius: 2,
   },
 });

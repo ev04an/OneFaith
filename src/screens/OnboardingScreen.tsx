@@ -2,9 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
   ViewToken,
 } from 'react-native';
@@ -68,24 +71,35 @@ const SLIDES: Slide[] = [
   },
 ];
 
+type Phase = 'slides' | 'name';
+
 export function OnboardingScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const setHasOnboarded = useSettingsStore((s) => s.setHasOnboarded);
+  const setUserName = useSettingsStore((s) => s.setUserName);
   const [index, setIndex] = useState(0);
+  const [phase, setPhase] = useState<Phase>('slides');
+  const [name, setName] = useState('');
   const listRef = useRef<FlatList<Slide>>(null);
 
-  const finish = () => {
+  const finish = (capturedName?: string) => {
+    const trimmed = (capturedName ?? '').trim();
+    if (trimmed) setUserName(trimmed);
     setHasOnboarded(true);
     nav.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
   };
+
+  // Skip button bypasses both slides and the name step.
+  const skip = () => finish();
 
   const next = () => {
     if (index < SLIDES.length - 1) {
       listRef.current?.scrollToIndex({ index: index + 1, animated: true });
     } else {
-      finish();
+      // Last slide → go to the name capture step.
+      setPhase('name');
     }
   };
 
@@ -93,58 +107,223 @@ export function OnboardingScreen() {
     if (viewableItems[0]?.index != null) setIndex(viewableItems[0].index);
   }).current;
 
+  const activeGradient: GradientKey =
+    phase === 'name' ? 'primary' : SLIDES[index].gradient;
+
   return (
     <View style={{ flex: 1 }}>
-      <AnimatedBackground variant={SLIDES[index].gradient} />
-      <View style={{ flex: 1, paddingTop: insets.top + 16 }}>
-        <View style={styles.topRow}>
-          <View style={styles.dots}>
-            {SLIDES.map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.dot,
-                  {
-                    width: i === index ? 24 : 8,
-                    backgroundColor:
-                      i === index ? theme.colors.text : theme.colors.borderStrong,
-                  },
-                ]}
+      <AnimatedBackground variant={activeGradient} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={20}
+      >
+        <View style={{ flex: 1, paddingTop: insets.top + 16 }}>
+          {phase === 'slides' ? (
+            <>
+              <View style={styles.topRow}>
+                <View style={styles.dots}>
+                  {SLIDES.map((_, i) => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.dot,
+                        {
+                          width: i === index ? 24 : 8,
+                          backgroundColor:
+                            i === index ? theme.colors.text : theme.colors.borderStrong,
+                        },
+                      ]}
+                    />
+                  ))}
+                </View>
+                <Pressable onPress={skip} hitSlop={12}>
+                  <Text style={[theme.typography.bodyBold, { color: theme.colors.textMuted }]}>
+                    Skip
+                  </Text>
+                </Pressable>
+              </View>
+
+              <FlatList
+                ref={listRef}
+                data={SLIDES}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(_, i) => String(i)}
+                renderItem={({ item, index: i }) => (
+                  <SlideView slide={item} active={i === index} />
+                )}
+                onViewableItemsChanged={onViewable}
+                viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
               />
-            ))}
-          </View>
-          <Pressable onPress={finish} hitSlop={12}>
-            <Text style={[theme.typography.bodyBold, { color: theme.colors.textMuted }]}>
-              Skip
-            </Text>
-          </Pressable>
-        </View>
 
-        <FlatList
-          ref={listRef}
-          data={SLIDES}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(_, i) => String(i)}
-          renderItem={({ item, index: i }) => (
-            <SlideView slide={item} active={i === index} />
+              <View style={[styles.footer, { paddingBottom: insets.bottom + 18 }]}>
+                <GradientButton
+                  label={index === SLIDES.length - 1 ? 'Almost there' : 'Continue'}
+                  iconRight="arrow-forward"
+                  onPress={next}
+                  full
+                  size="lg"
+                  glow
+                  gradient="primary"
+                />
+              </View>
+            </>
+          ) : (
+            <NameStep
+              name={name}
+              setName={setName}
+              onSubmit={() => finish(name)}
+              onSkip={() => finish()}
+              insets={insets}
+            />
           )}
-          onViewableItemsChanged={onViewable}
-          viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
-        />
+        </View>
+      </KeyboardAvoidingView>
+    </View>
+  );
+}
 
-        <View style={[styles.footer, { paddingBottom: insets.bottom + 18 }]}>
-          <GradientButton
-            label={index === SLIDES.length - 1 ? 'Begin Your Journey' : 'Continue'}
-            iconRight="arrow-forward"
-            onPress={next}
-            full
-            size="lg"
-            glow
-            gradient="primary"
+function NameStep({
+  name,
+  setName,
+  onSubmit,
+  onSkip,
+  insets,
+}: {
+  name: string;
+  setName: (v: string) => void;
+  onSubmit: () => void;
+  onSkip: () => void;
+  insets: { bottom: number };
+}) {
+  const theme = useTheme();
+  const intro = useSharedValue(0);
+  const halo = useSharedValue(0);
+
+  useEffect(() => {
+    intro.value = withDelay(120, withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) }));
+    halo.value = withRepeat(
+      withTiming(1, { duration: 3500, easing: Easing.inOut(Easing.quad) }),
+      -1,
+      true,
+    );
+  }, [halo, intro]);
+
+  const haloStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + halo.value * 0.08 }],
+    opacity: 0.4 + halo.value * 0.4,
+  }));
+  const fadeStyle = useAnimatedStyle(() => ({
+    opacity: intro.value,
+    transform: [{ translateY: (1 - intro.value) * 16 }],
+  }));
+
+  return (
+    <View style={{ flex: 1, paddingHorizontal: 28 }}>
+      <View style={styles.iconWrap}>
+        <Animated.View
+          style={[
+            styles.halo,
+            { backgroundColor: theme.colors.primary },
+            haloStyle,
+          ]}
+        />
+        <View
+          style={[
+            styles.iconCircle,
+            {
+              borderColor: theme.colors.borderStrong,
+              backgroundColor: theme.colors.bgGlassStrong,
+            },
+          ]}
+        >
+          <Ionicons name="person-outline" size={56} color={theme.colors.text} />
+        </View>
+      </View>
+
+      <Animated.View style={[{ marginTop: 36 }, fadeStyle]}>
+        <Text style={[theme.typography.overline, { color: theme.colors.textMuted, textAlign: 'center' }]}>
+          ONE LAST THING
+        </Text>
+        <Text
+          style={[
+            theme.typography.display,
+            { color: theme.colors.text, textAlign: 'center', marginTop: 12, fontSize: 36, lineHeight: 42 },
+          ]}
+        >
+          What should we{'\n'}call you?
+        </Text>
+        <Text
+          style={[
+            theme.typography.body,
+            {
+              color: theme.colors.textMuted,
+              textAlign: 'center',
+              marginTop: 14,
+              fontSize: 15,
+              lineHeight: 22,
+            },
+          ]}
+        >
+          We'll greet you by name every time you open the app. You can always change it later in Settings.
+        </Text>
+
+        <View
+          style={[
+            styles.nameField,
+            {
+              backgroundColor: theme.colors.inputBg,
+              borderColor: theme.colors.inputBorder,
+              marginTop: 28,
+            },
+          ]}
+        >
+          <Ionicons
+            name="happy-outline"
+            size={20}
+            color={theme.colors.inputPlaceholder}
+            style={{ marginRight: 10 }}
+          />
+          <TextInput
+            value={name}
+            onChangeText={setName}
+            placeholder="Your first name"
+            placeholderTextColor={theme.colors.inputPlaceholder}
+            selectionColor={theme.colors.primary}
+            cursorColor={theme.colors.inputCaret}
+            underlineColorAndroid="transparent"
+            autoCapitalize="words"
+            autoCorrect={false}
+            maxLength={40}
+            returnKeyType="done"
+            onSubmitEditing={onSubmit}
+            style={[
+              theme.typography.body,
+              { color: theme.colors.inputText, flex: 1, padding: 0, fontSize: 16 },
+            ]}
           />
         </View>
+      </Animated.View>
+
+      <View style={{ flex: 1 }} />
+
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 18 }]}>
+        <GradientButton
+          label="Begin Your Journey"
+          iconRight="arrow-forward"
+          onPress={onSubmit}
+          full
+          size="lg"
+          glow
+          gradient="primary"
+        />
+        <Pressable onPress={onSkip} hitSlop={10} style={{ marginTop: 14, alignSelf: 'center' }}>
+          <Text style={[theme.typography.bodyBold, { color: theme.colors.textMuted }]}>
+            Continue as Child of God
+          </Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -260,5 +439,13 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 24,
     paddingTop: 12,
+  },
+  nameField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: Platform.OS === 'ios' ? 16 : 6,
   },
 });

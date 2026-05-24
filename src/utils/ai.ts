@@ -37,48 +37,341 @@ type Intent = {
 };
 
 const EMOTION_KEYWORDS: Record<EmotionId, string[]> = {
-  sad: ['sad', 'sadness', 'down', 'crying', 'tears', 'low', 'blue', 'hurt', 'bad day'],
-  depressed: ['depress', 'numb', 'empty', 'hollow', 'dark', 'nothing matters', 'cant feel'],
-  lonely: ['lonely', 'alone', 'isolat', 'no one', 'nobody', 'left out', 'no friends'],
-  heartbroken: ['heartbroken', 'breakup', 'broke up', 'left me', 'lost her', 'lost him', 'dumped', 'ex '],
-  angry: ['angry', 'anger', 'furious', 'rage', 'mad', 'hate', 'pissed', 'resent'],
-  anxious: ['anx', 'panic', 'worry', 'worried', 'nervous', 'on edge', 'restless'],
-  fearful: ['afraid', 'fear', 'scared', 'terrified', 'frightened'],
-  stressed: ['stress', 'overwhelm', 'too much', 'burned out', 'exhaust', 'drained'],
-  unmotivated: ['unmotiv', 'lazy', 'cant start', 'stuck', 'procrast', 'no energy', 'no will'],
-  overthinking: ['overthink', 'spiral', 'cant stop thinking', 'racing thoughts', 'ruminat'],
-  guilty: ['guilt', 'shame', 'ashamed', 'failed', 'mess up', 'messed up', 'regret'],
-  hopeless: ['hopeless', 'pointless', 'no point', 'give up', 'whats the point', 'no future'],
-  happy: ['happy', 'joy', 'good day', 'great day', 'amazing day', 'excited'],
-  thankful: ['thank', 'grateful', 'gratitude', 'blessed', 'appreciate'],
-  hopeful: ['hopeful', 'optimistic', 'looking forward', 'excited about'],
-  peaceful: ['peace', 'calm', 'still', 'quiet inside'],
+  sad: [
+    'sad', 'sadness', 'sadly', 'down', 'low', 'blue', 'hurt', 'hurting', 'bad day',
+    'crying', 'tears', 'tearing up', 'weeping', 'in tears',
+    'gloomy', 'mope', 'moping', 'melancholy', 'heartsick', 'rough day', 'tough day',
+    'heavy heart', 'bummed', 'feeling off', 'feeling bad', 'not okay', 'not ok',
+  ],
+  depressed: [
+    'depress', 'depresd', 'depresion', 'depressing',
+    'numb', 'empty', 'hollow', 'void', 'dark inside', 'darkness',
+    'nothing matters', 'cant feel', "can't feel", 'no feeling', 'no joy',
+    'flat', 'lifeless', 'soulless', 'shutdown', 'shut down', 'cant get up', "can't get up",
+    'in a hole', 'in the pit', 'rock bottom',
+  ],
+  lonely: [
+    'lonely', 'loneliness', 'alone', 'all alone', 'so alone', 'feel alone',
+    'isolat', 'isolated', 'isolating', 'cut off',
+    'no one', 'noone', 'nobody', 'no body', 'left out', 'unwanted',
+    'no friends', 'no one cares', 'forgotten', 'invisible', 'unseen',
+    'by myself', 'on my own', 'theres no one', "there's no one",
+  ],
+  heartbroken: [
+    'heartbroken', 'heartbreak', 'broken heart', 'broke my heart',
+    'breakup', 'break up', 'broke up', 'broken up',
+    'left me', 'she left', 'he left', 'dumped me', 'dumped', 'got dumped',
+    'lost her', 'lost him', 'lost my girl', 'lost my boy', 'lost the love',
+    'ex ', 'my ex', 'rejected', 'rejection',
+  ],
+  angry: [
+    'angry', 'anger', 'angered', 'furious', 'fuming', 'enraged', 'rage', 'raging',
+    'mad', 'so mad', 'pissed', 'pissed off', 'piss off',
+    'hate', 'hating', 'resent', 'resentment', 'resentful',
+    'irritated', 'annoyed', 'fed up', 'sick of', 'tired of',
+    'wanna scream', 'want to scream', 'losing it', 'lose it',
+  ],
+  anxious: [
+    'anx', 'anxious', 'anxiety', 'anxoius', 'anciuos',
+    'panic', 'panicking', 'panicky', 'panic attack',
+    'worry', 'worries', 'worried', 'worrying',
+    'nervous', 'nerves', 'on edge', 'edgy', 'restless', 'jittery', 'jumpy',
+    'butterflies', 'knot in my stomach', 'cant breathe', "can't breathe",
+    'heart racing', 'heart pounding', 'sweating', 'tense', 'tight chest',
+  ],
+  fearful: [
+    'afraid', 'fear', 'fearful', 'fears', 'scared', 'so scared',
+    'terrified', 'frightened', 'freaked out', 'freaking out',
+    'spooked', 'shaken', 'shook',
+    'what if', 'what ifs', 'worst case', 'worst-case',
+  ],
+  stressed: [
+    'stress', 'stressed', 'stressing', 'stressful',
+    'overwhelm', 'overwhelmed', 'overwhelming',
+    'too much', 'cant handle', "can't handle", 'cant cope', "can't cope",
+    'burned out', 'burnt out', 'burning out', 'burnout',
+    'exhaust', 'exhausted', 'drained', 'spent', 'wiped',
+    'pressure', 'under pressure', 'a lot going on', 'so much to do',
+  ],
+  unmotivated: [
+    'unmotiv', 'unmotivated', 'no motivation', 'lost motivation',
+    'lazy', 'feeling lazy',
+    'cant start', "can't start", 'cant begin', 'stuck', 'frozen',
+    'procrast', 'procrastinating', 'procrastinated',
+    'no energy', 'no will', 'no drive', 'no ambition',
+    'dont feel like', "don't feel like", 'dont wanna', "don't wanna",
+    'cant bring myself', "can't bring myself",
+  ],
+  overthinking: [
+    'overthink', 'over thinking', 'overthinking', 'over-thinking',
+    'spiral', 'spiraling', 'spiralling',
+    'cant stop thinking', "can't stop thinking", 'cant stop',
+    'racing thoughts', 'mind racing', 'mind wont stop', "mind won't stop",
+    'ruminat', 'ruminating', 'rumination',
+    'replay', 'replaying', 'loop', 'looping', 'thoughts loop',
+    'analysis paralysis',
+  ],
+  guilty: [
+    'guilt', 'guilty', 'shame', 'shamed', 'ashamed',
+    'failed', 'i failed', 'i let', 'let them down', 'let everyone down',
+    'mess up', 'messed up', 'messed it up', 'screwed up',
+    'regret', 'regrets', 'regretting',
+    'my fault', 'all my fault', 'i blame myself', 'kicking myself',
+    'shouldnt have', "shouldn't have", 'wish i hadnt', "wish i hadn't",
+  ],
+  hopeless: [
+    'hopeless', 'no hope', 'lost hope',
+    'pointless', 'no point', 'whats the point', "what's the point",
+    'give up', 'giving up', 'gave up',
+    'no future', 'no way out', 'no way forward', 'cant see a way',
+    'nothing will change', 'never gets better',
+  ],
+  happy: [
+    'happy', 'happier', 'happiness', 'joy', 'joyful', 'joyous',
+    'good day', 'great day', 'amazing day', 'best day', 'wonderful day',
+    'excited', 'excitement', 'thrilled', 'pumped', 'stoked',
+    'feeling good', 'feeling great', 'on top of the world', 'on cloud nine',
+    'smiling', 'grinning',
+  ],
+  thankful: [
+    'thank', 'thanks', 'thankful', 'thanksgiving',
+    'grateful', 'gratitude', 'gratefulness',
+    'blessed', 'blessing', 'feel blessed', 'count my blessings',
+    'appreciate', 'appreciated', 'appreciation',
+    'lucky', 'fortunate',
+  ],
+  hopeful: [
+    'hopeful', 'hope', 'i hope', 'have hope',
+    'optimistic', 'optimism',
+    'looking forward', 'excited about', 'cant wait', "can't wait",
+    'things will get better', 'getting better', 'on the up',
+  ],
+  peaceful: [
+    'peace', 'peaceful', 'at peace',
+    'calm', 'calming', 'calmer',
+    'still', 'stillness', 'quiet', 'quiet inside', 'silence',
+    'centered', 'grounded', 'settled', 'rest in', 'resting in',
+  ],
 };
 
 const TOPIC_KEYWORDS: Partial<Record<Topic, string[]>> = {
-  addiction: ['addict', 'relapse', 'porn', 'drink', 'drug', 'gambling', 'binge'],
-  temptation: ['temptation', 'tempted', 'urge', 'craving', 'pull', 'wanting to'],
-  forgiveness: ['forgive', 'forgiveness', 'sorry', 'sin', 'pardon'],
-  grief: ['died', 'death', 'loss', 'lost', 'grief', 'miss them', 'gone', 'funeral'],
-  healing: ['heal', 'healing', 'wound', 'sick', 'illness', 'recover'],
-  exams: ['exam', 'test', 'study', 'school', 'college', 'university', 'final', 'grade'],
-  // No trailing spaces — those prevent matches at the end of a sentence.
-  family: ['family', 'parent', 'parents', 'mom', 'mum', 'mother', 'dad', 'father', 'sister', 'brother', 'kids', 'son', 'daughter', 'husband', 'wife'],
-  friendship: ['friend', 'friendship', 'bestie', 'buddy'],
-  love: ['in love', 'relationship', 'boyfriend', 'girlfriend', 'partner'],
-  failure: ['failed', 'failure', 'failing', 'screwed up', 'messed up'],
-  success: ['promotion', 'got the job', 'succeeded', 'won', 'achieved'],
-  sleep: ['sleep', 'cant sleep', 'insomnia', 'tired', 'rest', 'bedtime'],
-  burnout: ['burnt out', 'burned out', 'burnout', 'exhausted', 'drained'],
-  identity: ['who am i', 'identity', 'worth', 'enough', 'good enough'],
-  selfWorth: ['worthless', 'no good', 'useless', 'unloved', 'unlovable'],
-  doubt: ['doubt', 'doubting', 'not sure if god', 'is god real'],
-  spiritualWarfare: ['spiritual attack', 'enemy', 'devil', 'darkness'],
-  purpose: ['purpose', 'meaning', 'why am i here', 'calling'],
-  recovery: ['recovery', 'getting better', 'on the mend'],
-  patience: ['waiting', 'wait', 'patient', 'how long'],
-  faith: ['faith', 'believe', 'trust god'],
-  thankfulness: ['blessed', 'gratitude', 'grateful'],
+  addiction: [
+    'addict', 'addicted', 'addiction', 'addictive',
+    'relapse', 'relapsed', 'relapsing',
+    'porn', 'pornography', 'lust', 'lusting',
+    'drink', 'drinking', 'alcohol', 'alcoholic', 'drunk', 'wasted',
+    'drug', 'drugs', 'high', 'getting high', 'using',
+    'gambling', 'gambled', 'bet', 'betting',
+    'binge', 'binging', 'binged',
+    'smoking', 'cigarette', 'vape', 'vaping',
+    'sober', 'sobriety', 'clean',
+  ],
+  temptation: [
+    'temptation', 'temptations', 'tempted', 'tempting',
+    'urge', 'urges', 'craving', 'cravings', 'crave',
+    'pull', 'pulled toward', 'pulling me', 'want to so bad',
+    'wanting to', 'wanna do', 'wanna use', 'wanna drink',
+  ],
+  forgiveness: [
+    'forgive', 'forgiven', 'forgiving', 'forgiveness',
+    'sorry', 'so sorry', 'apologize', 'apology',
+    'sin', 'sinned', 'sinning', 'sinful',
+    'pardon', 'mercy', 'absolution',
+    'cant forgive', "can't forgive",
+  ],
+  grief: [
+    'died', 'dead', 'death', 'passed away', 'passed', 'gone',
+    'loss', 'lost him', 'lost her', 'lost them', 'lost my',
+    'grief', 'grieving', 'mourning', 'mourn',
+    'miss them', 'miss him', 'miss her', 'missing them',
+    'funeral', 'burial', 'cremation',
+    'cant believe theyre gone', "can't believe they're gone",
+  ],
+  healing: [
+    'heal', 'healed', 'healing', 'healer',
+    'wound', 'wounded', 'wounds',
+    'sick', 'sickness', 'illness', 'ill', 'unwell',
+    'recover', 'recovery', 'recovering',
+    'cancer', 'tumor', 'diagnosis', 'diagnosed', 'hospital',
+    'in pain', 'chronic', 'condition', 'disease',
+  ],
+  exams: [
+    'exam', 'exams', 'examination',
+    'test', 'tests', 'testing',
+    'study', 'studying', 'studied', 'cant focus on study',
+    'school', 'college', 'university', 'campus',
+    'final', 'finals', 'mid-term', 'midterm',
+    'grade', 'grades', 'gpa', 'cgpa', 'marks',
+    'assignment', 'project', 'thesis', 'viva', 'placement', 'interview',
+  ],
+  family: [
+    // Generic family terms.
+    'family', 'fam', 'fammy', 'household', 'relative', 'relatives', 'kin',
+
+    // Mother — every common short / affectionate / regional form.
+    'mother', 'mom', 'moms', 'mommy', 'momma', 'mama', 'mamma',
+    'mum', 'mums', 'mummy', 'mumma', 'mumsy',
+    'mami', 'mamacita', 'mami ',
+    'maa', 'mata', 'amma', 'ammi', 'ammachi',
+
+    // Father — every common short / affectionate / regional form.
+    'father', 'dad', 'dads', 'daddy', 'dada',
+    'papa', 'pappa', 'papi', 'papito',
+    'pop ', 'pops', 'popsie',
+    'baba', 'bappa', 'abba', 'appa', 'appachan',
+
+    // Siblings.
+    'brother', 'brothers', 'bro', 'bros', 'bruh', 'brotha',
+    'sister', 'sisters', 'sis ', 'sisy', 'sissy', 'sista',
+    'sibling', 'siblings',
+    'chechi', 'chettan',
+    'twin', 'twins', 'twinnie',
+    'step-brother', 'stepbrother', 'step-sister', 'stepsister',
+    'half-brother', 'half-sister',
+
+    // Children.
+    'son', 'sons', 'sonny', 'sonny boy',
+    'daughter', 'daughters',
+    'kid', 'kids', 'kiddo', 'kiddos',
+    'child', 'children',
+    'baby', 'babies', 'little one', 'lil one',
+    'firstborn', 'newborn',
+
+    // Spouse / partner.
+    'husband', 'hubby', 'hubs',
+    'wife', 'wifey', 'missus', 'missis',
+    'spouse',
+    'fiance', 'fiancee', 'fiancé', 'fiancée',
+
+    // Grandparents — exhaustive.
+    'grandmother', 'grandma', 'grandmas', 'gramma', 'grammy',
+    'granny', 'grandy',
+    'nana', 'nanna', 'nanny', 'nanay',
+    'mema', 'meemaw', 'mimi', 'gigi', 'gram',
+    'nona', 'nonna', 'oma',
+    'abuela', 'lola',
+    'dadi', 'naani',
+
+    'grandfather', 'grandpa', 'grandpas',
+    'granddad', 'grandad', 'gramps', 'grampa', 'grampy',
+    'grandpop', 'pop-pop', 'popop', 'papaw', 'pawpaw',
+    'opa', 'nonno', 'abuelo', 'lolo',
+    'dada ', 'nana ',
+
+    // Aunts / uncles.
+    'aunt', 'aunts', 'auntie', 'aunty', 'auntee',
+    'uncle', 'uncles',
+    'tio', 'tia',
+    'chacha', 'mausa', 'bua', 'masi', 'mami',
+
+    // Cousins / nieces / nephews.
+    'cousin', 'cousins', 'cuzzo', 'cuzzin',
+    'niece', 'nieces',
+    'nephew', 'nephews',
+
+    // In-laws.
+    'in-law', 'in-laws', 'in law', 'in laws',
+    'mother-in-law', 'mother in law',
+    'father-in-law', 'father in law',
+    'sister-in-law', 'sister in law',
+    'brother-in-law', 'brother in law',
+    'son-in-law', 'daughter-in-law',
+
+    // Step / foster.
+    'stepmom', 'step-mom', 'step mom',
+    'stepdad', 'step-dad', 'step dad',
+    'stepson', 'stepdaughter',
+    'foster mom', 'foster dad', 'foster parent', 'foster family',
+    'adopted', 'adoptive',
+
+    // Godparents.
+    'godfather', 'godmother', 'godparent', 'godson', 'goddaughter',
+  ],
+  friendship: [
+    'friend', 'friends', 'friendship',
+    'bestie', 'best friend', 'bff', 'buddy', 'buddies', 'mate', 'mates',
+    'pal', 'pals', 'fellow',
+  ],
+  love: [
+    'in love', 'falling in love',
+    'relationship', 'dating', 'date',
+    'boyfriend', 'bf', 'girlfriend', 'gf',
+    'partner', 'spouse', 'crush',
+  ],
+  failure: [
+    'failed', 'failing', 'failure', 'failures',
+    'screwed up', 'messed up', 'blew it', 'tanked',
+    'didnt make it', "didn't make it", 'didnt pass', "didn't pass",
+    'rejected', 'denied', 'turned down',
+  ],
+  success: [
+    'promotion', 'got promoted', 'promoted',
+    'got the job', 'landed the job', 'hired',
+    'succeeded', 'won', 'win', 'winning',
+    'achieved', 'accomplished', 'passed',
+    'i did it',
+  ],
+  sleep: [
+    'sleep', 'sleeping', 'asleep', 'cant sleep', "can't sleep",
+    'insomnia', 'insomniac', 'awake all night',
+    'tired', 'sleepy', 'drowsy',
+    'rest', 'resting',
+    'bedtime', 'going to bed', 'in bed',
+    'nightmare', 'bad dreams',
+  ],
+  burnout: [
+    'burnt out', 'burned out', 'burning out', 'burnout',
+    'exhausted', 'completely drained', 'no fuel left', 'running on empty',
+    'cant keep going', "can't keep going",
+  ],
+  identity: [
+    'who am i', 'who i am', 'identity',
+    'worth', 'my worth', 'self worth', 'self-worth',
+    'enough', 'good enough', 'not enough',
+    'know myself', 'finding myself',
+  ],
+  selfWorth: [
+    'worthless', 'no good', 'useless', 'pointless',
+    'unloved', 'unlovable', 'cant be loved', "can't be loved",
+    'nobody wants me', 'no one wants me',
+    'a burden', 'better off without me',
+  ],
+  doubt: [
+    'doubt', 'doubts', 'doubting',
+    'not sure if god', 'is god real', 'does god exist', 'god isnt real', "god isn't real",
+    'lost my faith', 'losing faith', 'crisis of faith',
+    'questioning', 'why does god',
+  ],
+  spiritualWarfare: [
+    'spiritual attack', 'spiritual warfare',
+    'enemy', 'the enemy',
+    'devil', 'satan', 'demon', 'demonic', 'oppression',
+    'darkness', 'dark forces', 'evil',
+  ],
+  purpose: [
+    'purpose', 'my purpose', 'find my purpose',
+    'meaning', 'meaning of life',
+    'why am i here', 'why do i exist',
+    'calling', 'my calling', 'destiny', 'plan for me',
+  ],
+  recovery: [
+    'recovery', 'recovering', 'on the mend',
+    'getting better', 'doing better',
+    'streak', 'days clean', 'days sober',
+  ],
+  patience: [
+    'waiting', 'wait', 'waited',
+    'patient', 'patience', 'impatient',
+    'how long', 'when will', 'taking forever', 'takes so long',
+  ],
+  faith: [
+    'faith', 'my faith', 'have faith',
+    'believe', 'believing', 'belief',
+    'trust god', 'trust in god', 'trusting god',
+  ],
+  thankfulness: [
+    'blessed', 'gratitude', 'grateful', 'thanksgiving',
+  ],
 };
 
 const CRISIS_PATTERNS = [
@@ -124,19 +417,84 @@ const FEATURE_REPLY = 'This feature is still a work in progress.';
 // "can u pray for my dad" reaches the same code path as "can you pray for my
 // dad".
 const ABBREVIATIONS: Array<[RegExp, string]> = [
+  // Pronouns / common short forms
   [/\bu\b/gi, 'you'],
   [/\bur\b/gi, 'your'],
+  [/\byr\b/gi, 'your'],
+  [/\bya\b/gi, 'you'],
+  [/\bim\b/gi, "i'm"],
+  [/\bdont\b/gi, "don't"],
+  [/\bcant\b/gi, "can't"],
+  [/\bwont\b/gi, "won't"],
+  [/\bisnt\b/gi, "isn't"],
+  [/\bdoesnt\b/gi, "doesn't"],
+  [/\bwouldnt\b/gi, "wouldn't"],
+  [/\bcouldnt\b/gi, "couldn't"],
+  [/\bcudnt\b/gi, "couldn't"],
+  [/\bshouldnt\b/gi, "shouldn't"],
+  [/\bhavent\b/gi, "haven't"],
+  [/\bthats\b/gi, "that's"],
+  [/\bwhats\b/gi, "what's"],
+  [/\bwheres\b/gi, "where's"],
+  [/\bwhos\b/gi, "who's"],
+  [/\bhes\b/gi, "he's"],
+  [/\bshes\b/gi, "she's"],
+  [/\btheyre\b/gi, "they're"],
+  [/\byouve\b/gi, "you've"],
+  [/\byoure\b/gi, "you're"],
+  [/\bive\b/gi, "i've"],
+  [/\bid\b/gi, "i'd"],
+  [/\bill\b/gi, "i'll"],
+  // Texting / slang
   [/\bpls\b/gi, 'please'],
   [/\bplz\b/gi, 'please'],
   [/\bplease\s+plz\b/gi, 'please'],
   [/\bwud\b/gi, 'would'],
+  [/\bcud\b/gi, 'could'],
+  [/\bshud\b/gi, 'should'],
   [/\bwat\b/gi, 'what'],
+  [/\bwen\b/gi, 'when'],
+  [/\bwhy\b/gi, 'why'],
   [/\bcuz\b/gi, 'because'],
+  [/\bcoz\b/gi, 'because'],
+  [/\bbcoz\b/gi, 'because'],
   [/\bppl\b/gi, 'people'],
+  [/\bsmth\b/gi, 'something'],
+  [/\bsthn\b/gi, 'something'],
+  [/\bnthn\b/gi, 'nothing'],
+  [/\bany1\b/gi, 'anyone'],
+  [/\bevry1\b/gi, 'everyone'],
   [/\btmrw\b/gi, 'tomorrow'],
+  [/\btmrrw\b/gi, 'tomorrow'],
+  [/\btmr\b/gi, 'tomorrow'],
   [/\btnite\b/gi, 'tonight'],
-  [/\bcudnt\b/gi, "couldn't"],
+  [/\b2nite\b/gi, 'tonight'],
+  [/\b2day\b/gi, 'today'],
+  [/\b2morrow\b/gi, 'tomorrow'],
   [/\bidk\b/gi, "i don't know"],
+  [/\bidc\b/gi, "i don't care"],
+  [/\bafaik\b/gi, 'as far as i know'],
+  [/\bbtw\b/gi, 'by the way'],
+  [/\bnvm\b/gi, 'never mind'],
+  [/\bsry\b/gi, 'sorry'],
+  [/\bthx\b/gi, 'thanks'],
+  [/\bthnks\b/gi, 'thanks'],
+  [/\bty\b/gi, 'thank you'],
+  [/\bnp\b/gi, 'no problem'],
+  // Common typos for emotional words
+  [/\banxoius\b/gi, 'anxious'],
+  [/\banxiuos\b/gi, 'anxious'],
+  [/\banciuos\b/gi, 'anxious'],
+  [/\bdepresd\b/gi, 'depressed'],
+  [/\bdepresion\b/gi, 'depression'],
+  [/\btierd\b/gi, 'tired'],
+  [/\btryin\b/gi, 'trying'],
+  // Typos around common prayer-request words.
+  [/\bpary\b/gi, 'pray'],
+  [/\bprey\b/gi, 'pray'],
+  [/\bfro\b/gi, 'for'],
+  [/\bovr\b/gi, 'over'],
+  [/\bgrandy\b/gi, 'granny'],
 ];
 
 function normalizeInput(input: string): string {
@@ -159,6 +517,86 @@ const PRAYER_REQUEST_PATTERNS = [
 export function isPrayerRequest(input: string): boolean {
   const t = normalizeInput(input);
   return PRAYER_REQUEST_PATTERNS.some((re) => re.test(t));
+}
+
+// Words that signal concern when paired with a family/friend mention.
+// "my granny is sick" matches; "my dad called me" doesn't.
+const CONCERN_WORDS = [
+  // Health
+  'sick', 'ill', 'unwell', 'dying', 'died', 'cancer', 'tumor', 'tumour',
+  'hospital', 'hospitalized', 'hospitalised', 'icu', 'surgery', 'operation',
+  'diagnosed', 'diagnosis', 'chemo', 'chemotherapy', 'radiation',
+  'stroke', 'heart attack', 'pneumonia', 'covid', 'fever',
+  'paralyzed', 'paralysed', 'coma', 'critical condition',
+  // Emotional / spiritual
+  'struggling', 'hurting', 'in pain', 'suffering', 'going through',
+  'depressed', 'addicted', 'addiction', 'relapse', 'relapsed',
+  'lonely', 'broken', 'heartbroken', 'shattered', 'lost faith',
+  'losing faith', 'losing hope', 'hopeless',
+  // Life events
+  'lost his job', 'lost her job', 'lost their job', 'fired',
+  'divorced', 'divorcing', 'getting divorced',
+  'broke up', 'broken up', 'left them',
+  'in trouble', 'in jail', 'arrested',
+  // Death / loss adjacent
+  'passed away', 'passed', 'gone',
+];
+
+// Family / friend nouns the user is likely talking about when saying "my X".
+// Used to extract a subject for soft intercession.
+const RELATION_WORDS = [
+  'granny', 'gran', 'nana', 'nanna', 'nanny', 'grandma', 'grandmother',
+  'grandpa', 'grandfather', 'granddad', 'grandad', 'gramps',
+  'ammachi', 'appachan', 'dadi', 'naani',
+  'mom', 'mommy', 'mum', 'mummy', 'mother', 'momma', 'mama', 'mamma',
+  'maa', 'amma', 'ammi', 'mami',
+  'dad', 'daddy', 'father', 'papa', 'pappa', 'pop', 'pops',
+  'baba', 'bappa', 'abba', 'appa',
+  'brother', 'bro', 'sister', 'sis', 'sibling', 'twin',
+  'son', 'sonny', 'daughter', 'kid', 'kiddo', 'child', 'baby',
+  'husband', 'hubby', 'wife', 'wifey', 'spouse',
+  'fiance', 'fiancee', 'fiancé', 'fiancée',
+  'aunt', 'auntie', 'aunty', 'uncle', 'cousin', 'niece', 'nephew',
+  'friend', 'bestie', 'best friend', 'buddy',
+  'boyfriend', 'girlfriend', 'partner',
+  'family', 'parents', 'kids', 'siblings',
+  'chacha', 'mausa', 'bua', 'masi', 'chechi', 'chettan',
+];
+
+// Detects implicit intercession requests like "my granny is sick" or "my dad
+// is going through a hard time" — situations where the user isn't asking for
+// prayer explicitly but is clearly bringing a loved one's distress to the
+// conversation. Returns the relative phrase to address ("your granny") or
+// null when no implied request was found.
+function detectImpliedIntercession(input: string): string | null {
+  const t = normalizeInput(input).toLowerCase();
+
+  // Need at least one family/friend mention preceded by "my", "our", or "for".
+  const possessiveMatch = t.match(
+    new RegExp(`\\b(?:my|our|for\\s+my|for\\s+our)\\s+(${RELATION_WORDS.join('|')})\\b`, 'i'),
+  );
+  if (!possessiveMatch) return null;
+
+  // Need at least one concern word somewhere in the message.
+  const hasConcern = CONCERN_WORDS.some((w) => t.includes(w));
+  if (!hasConcern) return null;
+
+  const relation = possessiveMatch[1];
+  // Convert to second-person so the prayer reads back to the user about
+  // *their* loved one: "my granny" → "your granny".
+  return `your ${relation}`;
+}
+
+// Acknowledgment specifically for implied intercession — softer than the
+// explicit "of course let's pray" since the user didn't directly ask.
+function buildImpliedAcknowledgment(subject: string, seed: number): string {
+  const pool = [
+    `I'm so sorry. Carrying worry for ${subject} is its own kind of weight. Let me bring them to God with you right now.`,
+    `That's a lot to be carrying. Let's pause and lift ${subject} up to Him together.`,
+    `I hear how heavy this is. Let me pray for ${subject} with you.`,
+    `I'm sitting with you in this. Let's bring ${subject} before God.`,
+  ];
+  return pool[Math.abs(seed) % pool.length];
 }
 
 /** Pull the subject of a prayer request out of the input — "my dad", "you",
@@ -650,7 +1088,86 @@ export type GenerateOptions = {
   /** Last few assistant message texts, used to avoid repeating and to
    *  cool down the prayer-suggestion cadence (do not ask every turn). */
   recentAssistantTexts?: string[];
+  /** User's preferred name (from Settings → Profile). Used to personalize
+   *  openers — "I hear you, Evan" instead of generic empathy. Empty / undefined
+   *  falls back to nameless phrasing. */
+  userName?: string;
+  /** Recent user-message snippets, used for pronoun resolution ("him/her"
+   *  → previously named person) and to detect repeated topics. */
+  recentUserTexts?: string[];
+  /** The user's most-frequent emotion from their AI memory store. When the
+   *  same theme has come up repeatedly, the assistant gently acknowledges
+   *  the pattern ("You've been carrying this for a while"). */
+  topMemoryEmotion?: EmotionId;
 };
+
+/** Inject the user's name into an opener naturally. Uses heuristics to
+ *  insert the name at a place that flows ("I hear you. → I hear you, Evan.")
+ *  without making every line feel scripted. Returns the original opener if
+ *  no name was provided or the line doesn't lend itself to personalization. */
+function personalizeOpener(opener: string, name?: string, seed: number = 0): string {
+  if (!name || !opener) return opener;
+  const safe = name.trim().split(/\s+/)[0]; // first name only
+  if (!safe || safe.length > 24) return opener;
+
+  // Roll a die — only personalize ~60% of the time so it doesn't feel robotic.
+  if ((Math.abs(seed) % 10) > 5) return opener;
+
+  // Common natural insertion points.
+  const patterns: Array<[RegExp, string]> = [
+    [/^I hear you\./, `I hear you, ${safe}.`],
+    [/^I'm here\./, `I'm here, ${safe}.`],
+    [/^I'm here\b/, `I'm here, ${safe},`],
+    [/^Stay with me\./, `Stay with me, ${safe}.`],
+    [/^I'm listening\./, `I'm listening, ${safe}.`],
+    [/^Thank you for being honest with me\./, `Thank you for being honest with me, ${safe}.`],
+    [/^Take your time\./, `Take your time, ${safe}.`],
+    [/^I'm sitting with you in this\./, `I'm sitting with you, ${safe}.`],
+    [/^I'm so sorry\./, `I'm so sorry, ${safe}.`],
+    [/^I'm glad you said something\./, `I'm glad you said something, ${safe}.`],
+    [/^I'm glad you came here\./, `${safe}, I'm glad you came here.`],
+    [/^I'm really glad you came here\./, `${safe}, I'm really glad you came here.`],
+  ];
+  for (const [re, repl] of patterns) {
+    if (re.test(opener)) return opener.replace(re, repl);
+  }
+  // Generic prefix fallback — only if the opener starts with a short phrase.
+  if (opener.length < 220 && /^[A-Z][a-z]/.test(opener)) {
+    return `${safe}, ${opener.charAt(0).toLowerCase()}${opener.slice(1)}`;
+  }
+  return opener;
+}
+
+/** When the user has frequently talked about the same emotion, the
+ *  companion gently acknowledges the pattern. Returns a sentence to
+ *  prepend to the body, or null. */
+function memoryAwareHint(
+  topMemoryEmotion: EmotionId | undefined,
+  current: EmotionId[],
+  seed: number,
+): string | null {
+  if (!topMemoryEmotion) return null;
+  // Only acknowledge if the same theme came up *this* message too —
+  // otherwise it'd feel like the assistant is changing the subject.
+  if (!current.includes(topMemoryEmotion)) return null;
+  // Roll the dice — not every message gets the callback.
+  if ((Math.abs(seed) % 4) !== 0) return null;
+  const friendly: Partial<Record<EmotionId, string>> = {
+    anxious: "You've been carrying anxiety for a while now. I see it. It's not just tonight.",
+    sad: "This sadness has come up before for you. I'm not glossing over that.",
+    depressed: "I know this weight has been a long visitor. You don't have to apologize for it.",
+    lonely: "Loneliness has been coming up for you. I want you to know I'm still listening.",
+    heartbroken: "This hurt's been with you. Healing isn't a deadline.",
+    angry: "Anger's been a regular guest lately. Let's not just push it down again.",
+    overthinking: "Your mind has been doing this loop a while. We can name it tonight.",
+    guilty: "Guilt has been heavy on you. It doesn't have to stay this long.",
+    hopeless: "I know hope has felt far off recently. I'm here in the meantime.",
+    stressed: "You've been stretched thin for a while. That matters.",
+    fearful: "Fear's been around the edges for you. I haven't forgotten that.",
+    unmotivated: "Stuck has been the word for a while. I see you still showing up.",
+  };
+  return friendly[topMemoryEmotion] ?? null;
+}
 
 export function generateEncouragement(
   input: string,
@@ -687,6 +1204,28 @@ export function generateEncouragement(
   if (isPrayerRequest(normalized)) {
     const subject = extractPrayerSubject(normalized);
     const { acknowledgment, prayer, verse } = buildIntercession(subject, seed);
+    return {
+      opener: acknowledgment,
+      body: prayer,
+      verseLine: `"${verse.text}" — ${verse.reference}`,
+      verse: VERSES[seed % VERSES.length],
+      prayer: null,
+      prayerSuggestion: null,
+      closer: "In Jesus' name I pray, Amen.",
+      emotion: null,
+      suggestPrayer: false,
+      detectedEmotions: intent.emotions,
+      detectedTopics: intent.topics,
+    };
+  }
+
+  // Implied intercession — the user said something like "my granny is sick"
+  // without explicitly asking for prayer. Treat it as a natural prayer moment
+  // and lead with intercession + offer comfort.
+  const impliedSubject = detectImpliedIntercession(normalized);
+  if (impliedSubject) {
+    const acknowledgment = buildImpliedAcknowledgment(impliedSubject, seed);
+    const { prayer, verse } = buildIntercession(impliedSubject, seed + 5);
     return {
       opener: acknowledgment,
       body: prayer,
@@ -756,8 +1295,17 @@ export function generateEncouragement(
   const tone = TONE[intent.primary];
   const recent = new Set(opts.recentAssistantTexts ?? []);
 
-  const opener = pickDistinct(tone.openers, seed, recent);
-  const body = pickDistinct(tone.bodies, seed + 17, recent);
+  const rawOpener = pickDistinct(tone.openers, seed, recent);
+  const opener = personalizeOpener(rawOpener, opts.userName, seed);
+
+  // Memory-aware: gently acknowledge recurring themes when the same emotion
+  // shows up again. Prepended to the body. Skipped for thankfulness/general.
+  const memoryHint =
+    intent.primary !== 'thankfulness' && intent.primary !== 'general'
+      ? memoryAwareHint(opts.topMemoryEmotion, intent.emotions, seed + 9)
+      : null;
+  const rawBody = pickDistinct(tone.bodies, seed + 17, recent);
+  const body = memoryHint ? `${memoryHint}\n\n${rawBody}` : rawBody;
 
   // Only sometimes include the verse line — keeps the reply conversational.
   // High-severity always include verse; low-severity sometimes skip.

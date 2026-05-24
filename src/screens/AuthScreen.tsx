@@ -24,12 +24,18 @@ import type { RootStackParamList } from '../navigation/types';
 
 type Mode = 'signin' | 'signup' | 'reset';
 
+// Flip to `true` in v1.1 once an EAS dev/prod build is in place. Google
+// sign-in cannot complete its OAuth round-trip inside Expo Go, so we ship
+// v1.0 with email/password only.
+const SHOW_GOOGLE_SIGNIN = false;
+
 export function AuthScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const signIn = useAuthStore((s) => s.signIn);
   const signUp = useAuthStore((s) => s.signUp);
+  const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
   const sendPasswordReset = useAuthStore((s) => s.sendPasswordReset);
 
   const [mode, setMode] = useState<Mode>('signin');
@@ -307,6 +313,60 @@ export function AuthScreen() {
               ) : null}
             </View>
 
+            {SHOW_GOOGLE_SIGNIN && mode !== 'reset' ? (
+              <>
+                <View style={styles.divider}>
+                  <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
+                  <Text
+                    style={[
+                      theme.typography.caption,
+                      { color: theme.colors.textFaint, marginHorizontal: 12 },
+                    ]}
+                  >
+                    or
+                  </Text>
+                  <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
+                </View>
+                <Pressable
+                  onPress={async () => {
+                    if (busy) return;
+                    haptics.tap();
+                    setBusy(true);
+                    setError(null);
+                    setInfo(null);
+                    try {
+                      const res = await signInWithGoogle();
+                      if (res.ok) {
+                        haptics.success();
+                        goBack();
+                      } else if ('error' in res) {
+                        setError(res.error);
+                      }
+                      // canceled case: stay silent
+                    } catch {
+                      setError('Something went wrong. Please try again.');
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                  style={[
+                    styles.googleBtn,
+                    {
+                      backgroundColor: '#FFFFFF',
+                      borderColor: 'rgba(15,31,75,0.16)',
+                      opacity: busy ? 0.6 : 1,
+                    },
+                  ]}
+                  disabled={busy}
+                >
+                  <GoogleLogo />
+                  <Text style={styles.googleBtnLabel}>
+                    {mode === 'signup' ? 'Sign up with Google' : 'Continue with Google'}
+                  </Text>
+                </Pressable>
+              </>
+            ) : null}
+
             {mode === 'signin' ? (
               <Pressable
                 onPress={() => switchMode('reset')}
@@ -358,6 +418,15 @@ export function AuthScreen() {
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
+    </View>
+  );
+}
+
+function GoogleLogo() {
+  // Inline SVG-style logo via View shapes — keeps us from adding a new dep.
+  return (
+    <View style={styles.googleLogo}>
+      <Text style={styles.googleLogoText}>G</Text>
     </View>
   );
 }
@@ -456,5 +525,47 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     justifyContent: 'center',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  googleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 15,
+    paddingHorizontal: 22,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  googleBtnLabel: {
+    color: '#1f2733',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  googleLogo: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#4285F4',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  googleLogoText: {
+    color: '#4285F4',
+    fontSize: 13,
+    fontWeight: '900',
+    lineHeight: 16,
   },
 });
