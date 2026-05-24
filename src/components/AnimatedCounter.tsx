@@ -30,10 +30,10 @@ export function AnimatedCounter({
       return;
     }
     let raf = 0;
-    const start = performance.now();
+    const start = Date.now();
     const from = 0;
-    const tick = (now: number) => {
-      const elapsed = Math.min((now - start) / duration, 1);
+    const tick = () => {
+      const elapsed = Math.min((Date.now() - start) / duration, 1);
       const eased = 1 - Math.pow(1 - elapsed, 3);
       setDisplay(Math.round(from + (value - from) * eased));
       if (elapsed < 1) raf = requestAnimationFrame(tick);

@@ -81,6 +81,15 @@ export function AIScreen() {
   const [showPrayerCTA, setShowPrayerCTA] = useState(false);
   const [showFAB, setShowFAB] = useState(false);
   const listRef = useRef<FlatList<ChatMessage>>(null);
+  // Tracks pending timeouts so we can cancel them on unmount and avoid
+  // state-update-on-unmounted warnings / wasted work.
+  const pendingTimeouts = useRef<Array<ReturnType<typeof setTimeout>>>([]);
+  useEffect(() => {
+    return () => {
+      pendingTimeouts.current.forEach((id) => clearTimeout(id));
+      pendingTimeouts.current = [];
+    };
+  }, []);
 
   // Only the most recent assistant message runs word-by-word reveal. Older
   // ones render statically so scrolling history stays cheap.
@@ -98,7 +107,8 @@ export function AIScreen() {
 
   useEffect(() => {
     if (messages.length > 0) {
-      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 60);
+      const id = setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 60);
+      pendingTimeouts.current.push(id);
     }
   }, [messages.length]);
 
@@ -163,7 +173,7 @@ export function AIScreen() {
     setInput('');
     setThinking(true);
     setShowPrayerCTA(false);
-    setTimeout(() => {
+    const id = setTimeout(() => {
       const recentAssistantTexts = messages
         .filter((m) => m.role === 'assistant')
         .slice(-3)
@@ -196,6 +206,7 @@ export function AIScreen() {
       }
       setThinking(false);
     }, 900 + Math.random() * 700);
+    pendingTimeouts.current.push(id);
   };
 
   return (

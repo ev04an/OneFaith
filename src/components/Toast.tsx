@@ -18,6 +18,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withDelay,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 import { useTheme } from '../theme';
@@ -112,13 +113,17 @@ function ToastView({
   const t = useSharedValue(0);
 
   useEffect(() => {
-    t.value = withTiming(1, { duration: 280, easing: Easing.out(Easing.cubic) });
-    // Schedule fade-out + dismissal.
-    t.value = withDelay(
-      toast.duration,
-      withTiming(0, { duration: 260, easing: Easing.in(Easing.cubic) }, (finished) => {
-        if (finished) runOnJS(onDismiss)();
-      }),
+    // Fade in -> hold -> fade out. Must be sequenced into one animation:
+    // assigning to t.value twice in a row cancels the first animation, so the
+    // toast would otherwise render at opacity 0 the entire time.
+    t.value = withSequence(
+      withTiming(1, { duration: 280, easing: Easing.out(Easing.cubic) }),
+      withDelay(
+        toast.duration,
+        withTiming(0, { duration: 260, easing: Easing.in(Easing.cubic) }, (finished) => {
+          if (finished) runOnJS(onDismiss)();
+        }),
+      ),
     );
   }, [t, toast.duration, onDismiss]);
 
