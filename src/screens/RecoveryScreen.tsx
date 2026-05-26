@@ -117,7 +117,17 @@ export function RecoveryScreen() {
                 />
               </Pressable>
             </View>
-            <Text style={[theme.typography.h1, { color: theme.colors.text, marginTop: 4 }]}>
+            <Text
+              style={[
+                running ? theme.typography.h1 : theme.typography.heroItalic,
+                {
+                  color: theme.colors.text,
+                  marginTop: running ? 4 : 6,
+                  fontSize: running ? undefined : 30,
+                  lineHeight: running ? undefined : 36,
+                },
+              ]}
+            >
               {running ? level.name : 'Begin again, today.'}
             </Text>
           </View>

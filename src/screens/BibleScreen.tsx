@@ -431,10 +431,11 @@ const BookCell = React.memo(function BookCell({
       <Text
         numberOfLines={2}
         style={{
+          // Cinzel for biblical book names — Roman-inscription gravitas.
+          fontFamily: 'Cinzel_600SemiBold',
           color: theme.colors.text,
           fontSize: 13,
-          fontWeight: '700',
-          letterSpacing: 0.2,
+          letterSpacing: 0.6,
           textAlign: 'center',
         }}
       >
@@ -442,10 +443,12 @@ const BookCell = React.memo(function BookCell({
       </Text>
       <Text
         style={{
+          fontFamily: 'Inter_500Medium',
           color: theme.colors.text,
           opacity: 0.65,
           fontSize: 11,
-          marginTop: 3,
+          marginTop: 4,
+          letterSpacing: 0.8,
         }}
       >
         {book.chapters} ch

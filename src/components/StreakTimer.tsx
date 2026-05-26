@@ -153,15 +153,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   days: {
-    fontSize: 76,
-    lineHeight: 80,
-    fontWeight: '800',
-    letterSpacing: -2,
+    // Cormorant Garamond — luxe display feel. The streak count is the hero
+    // number on this screen and deserves the most refined glyph in the system.
+    fontFamily: 'CormorantGaramond_700Bold',
+    fontSize: 84,
+    lineHeight: 88,
+    letterSpacing: -3,
     marginTop: 2,
   },
   time: {
+    fontFamily: 'Inter_700Bold',
     fontSize: 22,
-    fontWeight: '700',
     letterSpacing: 2,
     marginTop: 8,
     fontVariant: ['tabular-nums'],

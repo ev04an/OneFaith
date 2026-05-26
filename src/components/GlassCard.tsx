@@ -5,6 +5,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
 
 // Single-surface card. Optional `tilt3D` mode adds a subtle two-axis tilt + lift
@@ -26,7 +27,8 @@ type Props = ViewProps & {
   glowSoft?: boolean;
   /** Even deeper shadow stack for hero / focal cards. */
   depth?: boolean;
-  /** Enables touch-driven 3D tilt + lift. Only applies when `onPress` provided. */
+  /** Enables touch-driven 3D tilt + lift. Defaults to true when `onPress` is
+   *  provided — pass `tilt3D={false}` to opt out for a flat-press style. */
   tilt3D?: boolean;
   radius?: number;
   /** Deprecated — kept for backward compatibility. */
@@ -42,7 +44,7 @@ export function GlassCard({
   glow = false,
   glowSoft = false,
   depth = false,
-  tilt3D = false,
+  tilt3D,
   radius,
   style,
   children,
@@ -90,7 +92,9 @@ export function GlassCard({
   const rx = useSharedValue(0);
   const ry = useSharedValue(0);
   const lift = useSharedValue(0);
-  const tiltActive = !!onPress && tilt3D;
+  // tilt3D defaults to true when the card is pressable — premium touch feel
+  // everywhere by default; callers can pass tilt3D={false} to opt out.
+  const tiltActive = !!onPress && (tilt3D ?? true);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [
@@ -128,6 +132,44 @@ export function GlassCard({
     lift.value = withSpring(0, { damping: 14, stiffness: 220 });
   };
 
+  // Beveled-glass inner highlight: a thin gradient at the top edge softens the
+  // boundary and creates the illusion of light landing on a real surface. The
+  // bottom gets a subtle inner shade so the card feels recessed at the base.
+  // Skipped when overflow has children that need clipping (e.g. images), since
+  // they already paint the surface.
+  const Bevel = () => (
+    <>
+      <LinearGradient
+        pointerEvents="none"
+        colors={
+          theme.isDark
+            ? (['rgba(255,255,255,0.10)', 'rgba(255,255,255,0)'] as const)
+            : (['rgba(255,255,255,0.85)', 'rgba(255,255,255,0)'] as const)
+        }
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={[
+          StyleSheet.absoluteFillObject,
+          { borderRadius: r, height: '38%' },
+        ]}
+      />
+      <LinearGradient
+        pointerEvents="none"
+        colors={
+          theme.isDark
+            ? (['rgba(0,0,0,0)', 'rgba(0,0,0,0.18)'] as const)
+            : (['rgba(15,31,75,0)', 'rgba(15,31,75,0.05)'] as const)
+        }
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={[
+          StyleSheet.absoluteFillObject,
+          { borderRadius: r, top: '62%' },
+        ]}
+      />
+    </>
+  );
+
   if (onPress) {
     return (
       <AnimatedPressable
@@ -137,6 +179,7 @@ export function GlassCard({
         style={[containerStyle, animStyle, style as any]}
         {...(rest as any)}
       >
+        <Bevel />
         <View style={padStyle}>{children}</View>
       </AnimatedPressable>
     );
@@ -144,6 +187,7 @@ export function GlassCard({
 
   return (
     <View style={[containerStyle, style]} {...rest}>
+      <Bevel />
       <View style={padStyle}>{children}</View>
     </View>
   );

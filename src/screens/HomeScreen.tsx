@@ -692,11 +692,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   welcomeText: {
-    fontSize: 34,
-    fontWeight: '700',
+    // Cormorant Garamond — editorial-luxury serif. Reads like the masthead
+    // of a quiet morning paper, exactly the tone the greeting wants.
+    fontFamily: 'CormorantGaramond_700Bold',
+    fontSize: 38,
     letterSpacing: -0.5,
     marginTop: 4,
-    lineHeight: 40,
+    lineHeight: 44,
   },
   avatarBtn: {
     width: 46,
@@ -722,23 +724,25 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   heroEyebrow: {
+    // Cinzel — Roman-inscription serif. Lends gravitas to scripture labels.
+    fontFamily: 'Cinzel_600SemiBold',
     color: 'rgba(255,255,255,0.94)',
     fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 2,
+    letterSpacing: 2.4,
     flex: 1,
   },
   heroVerse: {
+    // Cormorant italic — reads like a missal page.
+    fontFamily: 'CormorantGaramond_500Medium_Italic',
     color: '#FFFFFF',
-    fontSize: 19,
-    lineHeight: 27,
-    fontWeight: '500',
+    fontSize: 22,
+    lineHeight: 32,
   },
   heroRef: {
+    fontFamily: 'Cinzel_600SemiBold',
     color: 'rgba(255,255,255,0.92)',
     fontSize: 12.5,
-    fontWeight: '700',
-    letterSpacing: 1,
+    letterSpacing: 1.4,
     marginTop: 12,
   },
   actionRow: {

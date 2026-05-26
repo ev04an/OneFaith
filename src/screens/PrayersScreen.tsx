@@ -58,7 +58,15 @@ export function PrayersScreen() {
           PRAYERS
         </Text>
         <Text style={[theme.typography.hero, { color: theme.colors.text, marginTop: 6 }]}>
-          A quiet place{'\n'}to lay it down.
+          A quiet place
+        </Text>
+        <Text
+          style={[
+            theme.typography.heroItalic,
+            { color: theme.colors.text, opacity: 0.92, marginTop: 2 },
+          ]}
+        >
+          to lay it down.
         </Text>
 
         <GlassCard style={{ marginTop: 18 }}>

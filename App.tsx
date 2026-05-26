@@ -38,6 +38,18 @@ import {
   Inter_700Bold,
   Inter_800ExtraBold,
 } from '@expo-google-fonts/inter';
+import {
+  CormorantGaramond_500Medium,
+  CormorantGaramond_600SemiBold,
+  CormorantGaramond_700Bold,
+  CormorantGaramond_500Medium_Italic,
+  CormorantGaramond_600SemiBold_Italic,
+} from '@expo-google-fonts/cormorant-garamond';
+import {
+  Cinzel_500Medium,
+  Cinzel_600SemiBold,
+  Cinzel_700Bold,
+} from '@expo-google-fonts/cinzel';
 import { ThemeProvider, useTheme } from './src/theme';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import {
@@ -164,6 +176,15 @@ function Inner() {
     Inter_600SemiBold,
     Inter_700Bold,
     Inter_800ExtraBold,
+    // Premium serif pair — editorial luxury + Roman inscription
+    CormorantGaramond_500Medium,
+    CormorantGaramond_600SemiBold,
+    CormorantGaramond_700Bold,
+    CormorantGaramond_500Medium_Italic,
+    CormorantGaramond_600SemiBold_Italic,
+    Cinzel_500Medium,
+    Cinzel_600SemiBold,
+    Cinzel_700Bold,
   });
   const ready = hydrated && fontsLoaded;
 
