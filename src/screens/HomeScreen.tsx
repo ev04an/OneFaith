@@ -20,6 +20,8 @@ import { PressableScale } from '../components/PressableScale';
 import { AnimatedCounter } from '../components/AnimatedCounter';
 import { AnimatedVerse } from '../components/AnimatedVerse';
 import { StreakRing } from '../components/StreakRing';
+import { SacredCorners } from '../components/SacredCorners';
+import { OrnamentDivider } from '../components/OrnamentDivider';
 import { useTheme } from '../theme';
 import { getVerseOfTheDay } from '../data/verses';
 import { getActiveHoliday } from '../data/holidays';
@@ -201,6 +203,9 @@ export function HomeScreen() {
             {/* Decorative shapes */}
             <View style={[styles.heroCircle, { top: -50, right: -30, width: 160, height: 160, opacity: 0.18 }]} />
             <View style={[styles.heroCircle, { bottom: -40, left: -20, width: 120, height: 120, opacity: 0.14 }]} />
+            {/* Illuminated-manuscript gold corners — the verse hero is the
+                most-looked-at element on Home, so it earns the framed treatment. */}
+            <SacredCorners color="#F7DD9C" inset={10} size={22} opacity={0.78} />
 
             <View style={styles.heroHeader}>
               <Ionicons name="book" size={20} color="#FFFFFF" />

@@ -7,6 +7,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { GlassCard } from '../components/GlassCard';
+import { DropCap } from '../components/DropCap';
+import { SacredCorners } from '../components/SacredCorners';
 import { GradientButton } from '../components/GradientButton';
 import { IconChip } from '../components/IconChip';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -72,6 +74,8 @@ export function VerseDetailScreen() {
               <Text style={styles.refText}>{verse.reference}</Text>
             </View>
             <Text style={styles.verseText}>“{verse.text}”</Text>
+            {/* Manuscript-frame gold corners on the hero */}
+            <SacredCorners color="#F7DD9C" inset={12} size={22} opacity={0.85} />
           </LinearGradient>
         </View>
 
@@ -79,14 +83,19 @@ export function VerseDetailScreen() {
           <Text style={[theme.typography.overline, { color: theme.colors.textFaint }]}>
             REFLECTION
           </Text>
-          <Text
-            style={[
-              theme.typography.body,
-              { color: theme.colors.text, marginTop: 8, fontSize: 16, lineHeight: 24 },
-            ]}
-          >
-            {verse.reflection}
-          </Text>
+          <View style={{ marginTop: 12 }}>
+            <DropCap
+              capSize={62}
+              bodyStyle={{
+                ...theme.typography.body,
+                color: theme.colors.text,
+                fontSize: 16,
+                lineHeight: 25,
+              }}
+            >
+              {verse.reflection}
+            </DropCap>
+          </View>
         </GlassCard>
 
         <View style={styles.chipRow}>
@@ -145,13 +154,19 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.35)',
   },
-  refText: { color: '#fff', fontSize: 12, fontWeight: '700', letterSpacing: 0.6 },
-  verseText: {
+  refText: {
+    fontFamily: 'Cinzel_600SemiBold',
     color: '#fff',
-    fontSize: 26,
-    lineHeight: 36,
+    fontSize: 12,
+    letterSpacing: 1.4,
+  },
+  verseText: {
+    // Cormorant italic — reads like a hand-set psalter.
+    fontFamily: 'CormorantGaramond_500Medium_Italic',
+    color: '#fff',
+    fontSize: 28,
+    lineHeight: 40,
     marginTop: 18,
-    fontFamily: 'Georgia',
   },
   chipRow: {
     flexDirection: 'row',

@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import { GlassCard } from '../components/GlassCard';
+import { OrnamentDivider } from '../components/OrnamentDivider';
 import { useTheme } from '../theme';
 import { PRAYER_CATEGORIES, PRAYERS } from '../data/prayers';
 import type { RootStackParamList } from '../navigation/types';
@@ -100,7 +101,8 @@ export function PrayersScreen() {
           </GlassCard>
         </Pressable>
 
-        <Text style={[theme.typography.h2, { color: theme.colors.text, marginTop: 26, marginBottom: 12 }]}>
+        <OrnamentDivider variant="fleur" spacing={22} />
+        <Text style={[theme.typography.h2, { color: theme.colors.text, marginBottom: 12 }]}>
           By need
         </Text>
         {!PRAYER_CATEGORIES?.length ? (

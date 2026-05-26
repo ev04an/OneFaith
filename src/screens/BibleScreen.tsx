@@ -15,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { GlassCard } from '../components/GlassCard';
+import { OrnamentDivider } from '../components/OrnamentDivider';
 import { useTheme } from '../theme';
 import {
   BIBLE_BOOKS,
@@ -166,10 +167,14 @@ export function BibleScreen() {
             </Text>
             <BookGrid books={OLD_TESTAMENT} onPick={goToBook} />
 
+            {/* Cross ornament marks the seam where the Old Covenant meets
+                the New — the most meaningful "passage break" in this screen. */}
+            <OrnamentDivider variant="cross" spacing={22} />
+
             <Text
               style={[
                 theme.typography.overline,
-                { color: theme.colors.text, opacity: 0.78, marginTop: 24, marginBottom: 10 },
+                { color: theme.colors.text, opacity: 0.78, marginBottom: 10 },
               ]}
             >
               NEW TESTAMENT
