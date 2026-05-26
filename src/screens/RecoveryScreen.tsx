@@ -137,7 +137,16 @@ export function RecoveryScreen() {
           entering={FadeIn.duration(700)}
           style={{ alignItems: 'center', marginTop: 24 }}
         >
-          <StreakTimer ms={elapsed} running={running} />
+          {/* When the streak hasn't started yet, the inner ring shows
+              "TAP BEGIN" — wire that up so tapping the ring itself starts
+              the streak (the gradient button below still works too). */}
+          {running ? (
+            <StreakTimer ms={elapsed} running={running} />
+          ) : (
+            <Pressable onPress={handleBegin} hitSlop={6}>
+              <StreakTimer ms={elapsed} running={running} />
+            </Pressable>
+          )}
         </Animated.View>
 
         {/* Affirmation under timer */}

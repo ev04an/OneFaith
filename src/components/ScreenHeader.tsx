@@ -23,9 +23,12 @@ export function ScreenHeader({ title, onBack, right, subtitle, large }: Props) {
   const insets = useSafeAreaInsets();
 
   const tint = theme.isDark ? 'dark' : 'light';
+  // Keep the gradient opaque almost all the way down so scrolling content below
+  // doesn't visually leak through the bottom of the header. The final fade is
+  // narrow — just enough to soften the hairline edge.
   const androidScrim = theme.isDark
-    ? (['rgba(8,16,40,0.78)', 'rgba(8,16,40,0.20)', 'rgba(8,16,40,0)'] as const)
-    : (['rgba(255,255,255,0.88)', 'rgba(255,255,255,0.35)', 'rgba(255,255,255,0)'] as const);
+    ? (['rgba(8,16,40,0.92)', 'rgba(8,16,40,0.88)', 'rgba(8,16,40,0)'] as const)
+    : (['rgba(255,255,255,0.96)', 'rgba(255,255,255,0.92)', 'rgba(255,255,255,0)'] as const);
 
   const headerHeight =
     insets.top + 10 + (large ? 78 : 50);
@@ -56,7 +59,7 @@ export function ScreenHeader({ title, onBack, right, subtitle, large }: Props) {
         )}
         <LinearGradient
           colors={androidScrim as any}
-          locations={[0, 0.7, 1]}
+          locations={[0, 0.88, 1]}
           style={StyleSheet.absoluteFillObject}
         />
         {/* Hairline bottom edge — the premium 'glass shelf' divider */}

@@ -52,7 +52,11 @@ import {
   usePrayerIntentionsStore,
   useAIMemoryStore,
 } from './src/state/store';
-import { rescheduleAll } from './src/utils/notifications';
+import {
+  hasNotificationPermission,
+  requestNotificationPermission,
+  rescheduleAll,
+} from './src/utils/notifications';
 import { ToastProvider } from './src/components/Toast';
 import { useAuthStore } from './src/state/auth';
 
@@ -103,22 +107,46 @@ function NotificationScheduler() {
   const eveningHour = useSettingsStore((s) => s.eveningHour);
   const quietStart = useSettingsStore((s) => s.quietStart);
   const quietEnd = useSettingsStore((s) => s.quietEnd);
+  const permAsked = useSettingsStore((s) => s.notificationPermissionAsked);
+  const setPermAsked = useSettingsStore((s) => s.setNotificationPermissionAsked);
 
   useEffect(() => {
-    // rescheduleAll is fully try/catch-wrapped internally and never prompts
-    // for permissions — it skips silently if permission isn't granted yet.
-    // The trailing .catch is belt-and-suspenders only.
-    rescheduleAll({
-      enabled,
-      morningEnabled: morning,
-      eveningEnabled: evening,
-      streakEnabled: streak,
-      morningHour,
-      eveningHour,
-      quietStart,
-      quietEnd,
-    }).catch(() => {});
-  }, [enabled, morning, evening, streak, morningHour, eveningHour, quietStart, quietEnd]);
+    (async () => {
+      // First-launch flow: if notifications are enabled by default but the OS
+      // permission was never requested (Android 13+ requires runtime grant for
+      // POST_NOTIFICATIONS), prompt the user once. Without this, the Settings
+      // toggle looks ON but no reminders ever fire because permission is
+      // implicitly denied.
+      if (enabled && !permAsked) {
+        const already = await hasNotificationPermission();
+        if (!already) {
+          await requestNotificationPermission().catch(() => {});
+        }
+        setPermAsked(true);
+      }
+      rescheduleAll({
+        enabled,
+        morningEnabled: morning,
+        eveningEnabled: evening,
+        streakEnabled: streak,
+        morningHour,
+        eveningHour,
+        quietStart,
+        quietEnd,
+      }).catch(() => {});
+    })();
+  }, [
+    enabled,
+    morning,
+    evening,
+    streak,
+    morningHour,
+    eveningHour,
+    quietStart,
+    quietEnd,
+    permAsked,
+    setPermAsked,
+  ]);
 
   return null;
 }

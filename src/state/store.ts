@@ -29,6 +29,9 @@ type SettingsState = {
   userName: string;
   /** Optional handle, mostly cosmetic for the profile card. */
   userUsername: string;
+  /** True once the OS notification-permission prompt has been shown at least
+   *  once, so we don't re-ambush the user on every launch. */
+  notificationPermissionAsked: boolean;
   setHasOnboarded: (v: boolean) => void;
   setThemePreference: (v: ThemePreference) => void;
   setAccentKey: (v: AccentKey) => void;
@@ -46,6 +49,7 @@ type SettingsState = {
   dismissHoliday: (id: string) => void;
   setUserName: (v: string) => void;
   setUserUsername: (v: string) => void;
+  setNotificationPermissionAsked: (v: boolean) => void;
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -68,6 +72,7 @@ export const useSettingsStore = create<SettingsState>()(
       dismissedHolidays: [],
       userName: '',
       userUsername: '',
+      notificationPermissionAsked: false,
       setHasOnboarded: (v) => set({ hasOnboarded: v }),
       setThemePreference: (v) => set({ themePreference: v }),
       setAccentKey: (v) => set({ accentKey: v }),
@@ -90,6 +95,7 @@ export const useSettingsStore = create<SettingsState>()(
         })),
       setUserName: (v) => set({ userName: v.slice(0, 40) }),
       setUserUsername: (v) => set({ userUsername: v.slice(0, 30) }),
+      setNotificationPermissionAsked: (v) => set({ notificationPermissionAsked: v }),
     }),
     {
       name: 'onefaith-settings',

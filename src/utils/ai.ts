@@ -645,6 +645,53 @@ const INTERCESSION_VERSES = [
   },
 ];
 
+// Relation words that carry implicit gender. Used to pick natural pronouns
+// in intercessory prayers — "I lift up your dad to You. You know him by name"
+// reads far better than "...You know them by name."
+const MASCULINE_RELATIONS = new Set([
+  'dad', 'daddy', 'father', 'papa', 'pappa', 'pop', 'pops',
+  'baba', 'bappa', 'abba', 'appa', 'appachan',
+  'grandpa', 'grandfather', 'granddad', 'grandad', 'gramps', 'grampa',
+  'papaw', 'pawpaw', 'opa', 'nonno', 'abuelo', 'lolo',
+  'brother', 'bro', 'stepbrother', 'half-brother',
+  'son', 'sonny', 'grandson', 'stepson',
+  'husband', 'hubby', 'boyfriend', 'fiance', 'fiancé',
+  'uncle', 'nephew',
+  'godfather', 'godson',
+]);
+const FEMININE_RELATIONS = new Set([
+  'mom', 'mommy', 'mum', 'mummy', 'mother', 'momma', 'mama', 'mamma',
+  'maa', 'amma', 'ammi', 'ammachi',
+  'grandma', 'grandmother', 'granny', 'nana', 'nanna', 'gramma', 'grammy',
+  'meemaw', 'mimi', 'gigi', 'gram', 'oma', 'nonna', 'abuela', 'lola',
+  'dadi', 'naani',
+  'sister', 'sis', 'stepsister', 'half-sister', 'chechi',
+  'daughter', 'granddaughter', 'stepdaughter',
+  'wife', 'wifey', 'girlfriend', 'fiancee', 'fiancée',
+  'aunt', 'auntie', 'aunty', 'niece',
+  'godmother', 'goddaughter',
+]);
+
+type Pronouns = { they: string; them: string; their: string; They: string; Them: string; Their: string };
+
+function resolvePronouns(subject: string): Pronouns {
+  // Look at the last word of the subject — for phrases like "your dad",
+  // "your big brother", "your beautiful granny" — the noun is the head.
+  const head = subject
+    .toLowerCase()
+    .replace(/[^a-z\s-]/g, '')
+    .trim()
+    .split(/\s+/)
+    .pop() ?? '';
+  if (MASCULINE_RELATIONS.has(head)) {
+    return { they: 'he', them: 'him', their: 'his', They: 'He', Them: 'Him', Their: 'His' };
+  }
+  if (FEMININE_RELATIONS.has(head)) {
+    return { they: 'she', them: 'her', their: 'her', They: 'She', Them: 'Her', Their: 'Her' };
+  }
+  return { they: 'they', them: 'them', their: 'their', They: 'They', Them: 'Them', Their: 'Their' };
+}
+
 function buildIntercession(
   subject: string,
   seed: number,
@@ -653,9 +700,10 @@ function buildIntercession(
   const acknowledgment = isUser
     ? "Of course. Let's pray together right now."
     : `Of course — let's bring ${subject} to God.`;
+  const p = resolvePronouns(subject);
   const prayer = isUser
     ? `Father, I come before You holding the heart of the one praying right now. You see them exactly where they are tonight — what they came here carrying, what they have not been able to say out loud. Meet them in it. Strengthen them. Comfort them. Quiet what is loud and heal what is hurting. Remind them they are not alone — that You are nearer than the air in their lungs.`
-    : `Father, I lift up ${subject} to You. You know them by name and love them more than any of us ever could. Wherever they are today — whatever burden, whatever hope, whatever fear they cannot speak — meet them there. Strengthen them in body and spirit. Surround them with Your peace. Soften the hard places, brighten the dark ones, and draw them close to You.`;
+    : `Father, I lift up ${subject} to You. You know ${p.them} by name and love ${p.them} more than any of us ever could. Wherever ${p.they} ${p.they === 'they' ? 'are' : 'is'} today — whatever burden, whatever hope, whatever fear ${p.they} cannot speak — meet ${p.them} there. Strengthen ${p.them} in body and spirit. Surround ${p.them} with Your peace. Soften the hard places, brighten the dark ones, and draw ${p.them} close to You.`;
   const verse = INTERCESSION_VERSES[Math.abs(seed) % INTERCESSION_VERSES.length];
   return { acknowledgment, prayer, verse };
 }

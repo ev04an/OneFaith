@@ -47,7 +47,9 @@ export function PrayersScreen() {
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top + 18,
-          paddingBottom: 160,
+          // Clear the floating tab bar (~96px) with comfortable breathing room
+          // so the last "By need" row isn't half-hidden behind the frosted bar.
+          paddingBottom: insets.bottom + 180,
           paddingHorizontal: 20,
         }}
         showsVerticalScrollIndicator={false}

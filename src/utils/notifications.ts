@@ -148,9 +148,12 @@ export type ScheduleConfig = {
 export async function ensureChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
   try {
+    // HIGH importance — needed so daily reminders show as heads-up and aren't
+    // silently bucketed by Android's adaptive notifications. DEFAULT was being
+    // suppressed on some devices.
     await Notifications.setNotificationChannelAsync('default', {
       name: 'OneFaith',
-      importance: Notifications.AndroidImportance.DEFAULT,
+      importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 120, 60, 120],
       lightColor: '#5B9BE3',
       sound: undefined,

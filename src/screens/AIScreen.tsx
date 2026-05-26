@@ -241,8 +241,20 @@ export function AIScreen() {
         }
       />
 
-      {/* Identity strip — premium 'who you're talking to' card under the header */}
-      <View style={[styles.identityRow, { borderColor: theme.colors.border }]}>
+      {/* Identity strip — premium 'who you're talking to' card under the header.
+          Needs an opaque background so chat messages don't bleed through visually
+          as they scroll up under it. */}
+      <View
+        style={[
+          styles.identityRow,
+          {
+            borderColor: theme.colors.border,
+            backgroundColor: theme.isDark
+              ? 'rgba(8,16,40,0.92)'
+              : 'rgba(255,255,255,0.96)',
+          },
+        ]}
+      >
         <AIAvatar size={36} pulse />
         <View style={{ marginLeft: 12, flex: 1 }}>
           <Text style={[theme.typography.bodyBold, { color: theme.colors.text, fontSize: 15 }]}>

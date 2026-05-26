@@ -61,7 +61,9 @@ export function BibleScreen() {
         contentContainerStyle={{
           paddingHorizontal: theme.spacing.screen,
           paddingTop: 14,
-          paddingBottom: insets.bottom + 140,
+          // 78 floating tab bar + ~18 bottom inset + breathing room — last row
+          // should not sit under the tab bar's frosted shelf.
+          paddingBottom: insets.bottom + 180,
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
